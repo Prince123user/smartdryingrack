@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.example.smartdryingrack.BuildConfig
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,7 +41,7 @@ fun SettingsScreen(settings: AutomationSettings = AutomationSettings(), connecti
         NeonFeatureRow("Appearance", if (settings.darkTheme) "Midnight cyan theme" else "Light theme", Icons.Outlined.Palette, onNavigateAppearance)
         SettingsSection("Device settings")
         NeonFeatureRow("Advanced settings", "Address, Wi-Fi status and firmware details", Icons.Outlined.Settings, onNavigateDevice)
-        NeonFeatureRow("About Smart Drying Rack", "Version 0.1.0 · local Wi-Fi REST", Icons.Outlined.Info, onNavigateAbout)
+        NeonFeatureRow("About Smart Drying Rack", "Version ${BuildConfig.VERSION_NAME} · local Wi-Fi REST", Icons.Outlined.Info, onNavigateAbout)
     }
 }
 

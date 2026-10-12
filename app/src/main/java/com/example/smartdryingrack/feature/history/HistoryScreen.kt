@@ -40,6 +40,7 @@ fun HistoryScreen(state: HistoryUiState) {
         else LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val points = state.temperatures.filter { it.timestamp >= start }
     ScreenColumn {
+        ScreenHeading("History", "Temperature trends and rack activity")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NeonAction("Today", Icons.Outlined.Today, { week = false }, modifier = Modifier.weight(1f),
                 accent = if (!week) AppColors.Primary else AppColors.TextSecondary)
@@ -67,10 +68,14 @@ fun TemperatureChart(points: List<TemperaturePoint>) {
     val grid = AppColors.Border
     GlassCard(Modifier.fillMaxWidth()) {
         if (points.size < 2) {
-            Column(Modifier.fillMaxWidth().height(164.dp), verticalArrangement = Arrangement.Center) {
-                Text("Waiting for temperature history", fontWeight = FontWeight.SemiBold, color = AppColors.TextPrimary)
-                Text("Two recorded measurements are needed for a trend. No sample chart is shown.",
-                    color = AppColors.TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                NeonIcon(Icons.Outlined.ShowChart, modifier = Modifier.size(54.dp))
+                Text("Waiting for temperature history", fontWeight = FontWeight.SemiBold, color = AppColors.TextPrimary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text("Connect your rack. The trend appears after two measurements, recorded five minutes apart.",
+                    color = AppColors.TextSecondary, style = MaterialTheme.typography.bodySmall,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         } else {
             val low = points.minOf { it.celsius } - 1f

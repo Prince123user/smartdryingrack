@@ -33,7 +33,7 @@ fun AlertsScreen(state: AlertsUiState, viewModel: AlertsViewModel) {
             AlertCategory.entries.forEach { category -> FilterChip(selected = state.filter == category,
                 onClick = { viewModel.setFilter(category) }, label = { Text(category.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
         }
-        if (active.isEmpty()) NeonFeatureRow("No new alerts", "Your rack's safety events will appear here.", Icons.Outlined.CheckCircle)
+        if (active.isEmpty()) EmptyStateCard("No new alerts", "Rain, sensor and connection events will appear here when recorded.", Icons.Outlined.CheckCircle)
         active.forEach { event -> key(event.id) { EventCard(event, viewModel::markRead) } }
         if (read.isNotEmpty()) {
             Text("Read alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)

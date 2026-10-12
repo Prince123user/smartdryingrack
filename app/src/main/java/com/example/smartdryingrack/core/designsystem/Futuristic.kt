@@ -87,13 +87,20 @@ fun DeviceConnectionCard(connection: ConnectionState, onClick: () -> Unit) {
 fun RackHero(state: RackState, modifier: Modifier = Modifier, showPosition: Boolean = true) {
     val shape = RoundedCornerShape(18.dp)
     val base = AppColors.Background
-    Box(modifier.fillMaxWidth().height(if (showPosition) 278.dp else 244.dp).clip(shape)) {
-        Image(painterResource(R.drawable.rack_scene), contentDescription = "Illustration of a motorized drying rack with hanging laundry",
-            modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent, base))))
-        if (showPosition) {
-            Text(stringResource(state.labelRes()), modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-                style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val height = (maxWidth * .65f).coerceIn(200.dp, 280.dp) + if (showPosition) 24.dp else 0.dp
+        Box(Modifier.fillMaxWidth().height(height).clip(shape).border(1.dp, AppColors.BorderSubtle, shape)) {
+            Image(painterResource(R.drawable.rack_scene), contentDescription = "Illustration of a motorized drying rack with hanging laundry",
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent, base))))
+            Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(RoundedCornerShape(8.dp))
+                .background(Color(0xB3040C16)).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                Text("RACK ILLUSTRATION", color = Color(0xFFB2C6E3), style = MaterialTheme.typography.labelSmall)
+            }
+            if (showPosition) {
+                Text(stringResource(state.labelRes()), modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                    style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
+            }
         }
     }
 }
@@ -109,7 +116,7 @@ fun NeonAction(label: String, icon: ImageVector, onClick: () -> Unit, enabled: B
         .background(Brush.linearGradient(listOf(activeColor.copy(alpha = if (enabled) .42f else .16f), activeColor.copy(alpha = .12f))))
         .border(1.dp, activeColor, shape)
         .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-        .padding(horizontal = 14.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
+        .padding(horizontal = 10.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(icon, contentDescription = null, tint = if (enabled) accent else AppColors.TextTertiary)
             Text(label, color = if (enabled) AppColors.TextPrimary else AppColors.TextTertiary, fontWeight = FontWeight.Bold)
@@ -130,5 +137,46 @@ fun NeonFeatureRow(title: String, description: String, icon: ImageVector, onClic
             }
             if (onClick != null) Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = AppColors.TextSecondary)
         }
+    }
+}
+
+@Composable
+fun ScreenHeading(title: String, subtitle: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
+        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
+    }
+}
+
+@Composable
+fun EmptyStateCard(title: String, message: String, icon: ImageVector,
+                   actionLabel: String? = null, onAction: (() -> Unit)? = null) {
+    GlassCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            NeonIcon(icon, modifier = Modifier.size(56.dp))
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                color = AppColors.TextPrimary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text(message, style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            if (actionLabel != null && onAction != null) {
+                TextButton(onClick = onAction) { Text(actionLabel) }
+            }
+        }
+    }
+}
+
+@Composable
+fun MovementAction(label: String, icon: ImageVector, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(18.dp)
+    val accent = if (enabled) AppColors.Primary else AppColors.Border
+    Column(modifier.heightIn(min = 88.dp).clip(shape)
+        .background(Brush.verticalGradient(listOf(accent.copy(alpha = .26f), AppColors.Card)))
+        .border(1.dp, accent.copy(alpha = if (enabled) .8f else .6f), shape)
+        .clickable(enabled = enabled, role = Role.Button, onClick = onClick).padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Icon(icon, contentDescription = null, tint = if (enabled) AppColors.Primary else AppColors.TextTertiary, modifier = Modifier.size(30.dp))
+        Text(label, color = if (enabled) AppColors.TextPrimary else AppColors.TextTertiary,
+            fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
     }
 }

@@ -2,7 +2,9 @@ package com.example.smartdryingrack.feature.control
 
 import android.text.format.DateFormat
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Umbrella
+import androidx.compose.material.icons.outlined.*
+import com.example.smartdryingrack.core.designsystem.MovementAction
+import com.example.smartdryingrack.core.designsystem.ScreenHeading
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -90,6 +92,7 @@ private fun RejectReason.res(): Int = when (this) {
 @Composable
 fun ControlScreen(state: ControlUiState, actions: ControlActions) {
     ScreenColumn {
+        ScreenHeading("Rack control", "Choose a mode and move your rack safely")
         ModeSelector(state.mode, actions::setMode, Modifier.fillMaxWidth())
 
         com.example.smartdryingrack.core.designsystem.RackHero(state.rackState)
@@ -102,26 +105,13 @@ fun ControlScreen(state: ControlUiState, actions: ControlActions) {
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            RackControlButton(
-                label = "Extend",
-                onClick = { actions.send(RackAction.EXTEND) },
-                enabled = state.availability.extend == null,
-                modifier = Modifier.weight(1f)
-            )
-            RackControlButton(
-                label = "Stop",
-                onClick = { actions.send(RackAction.STOP) },
-                enabled = state.availability.stop == null,
-                modifier = Modifier.weight(1f),
-                accent = AppColors.Warning
-            )
-            RackControlButton(
-                label = "Retract",
-                onClick = { actions.send(RackAction.RETRACT) },
-                enabled = state.availability.retract == null,
-                modifier = Modifier.weight(1f)
-            )
+            MovementAction("Extend", Icons.Outlined.KeyboardDoubleArrowUp,
+                state.availability.extend == null, { actions.send(RackAction.EXTEND) }, Modifier.weight(1f))
+            MovementAction("Retract", Icons.Outlined.KeyboardDoubleArrowDown,
+                state.availability.retract == null, { actions.send(RackAction.RETRACT) }, Modifier.weight(1f))
         }
+        RackControlButton("Stop", { actions.send(RackAction.STOP) },
+            enabled = state.availability.stop == null, modifier = Modifier.fillMaxWidth(), accent = AppColors.Warning)
 
         EmergencyStopButton(onClick = actions::emergencyStop, modifier = Modifier.fillMaxWidth())
 

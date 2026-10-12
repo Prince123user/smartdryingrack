@@ -2,6 +2,8 @@
 
 Android Kotlin/Compose companion for an ESP32 rack over Wi-Fi REST. The app starts offline until a real rack address is configured. It does not manufacture sensor readings, connection details, forecasts or drying statistics.
 
+Version **0.2.0** adds a dimensional adaptive launcher icon, clearer dashboard headings, larger movement controls, highlighted navigation, unread notification counts and guided empty states. Settings → About displays the installed version.
+
 ## Develop
 
 Use JDK 17, Gradle 8.13 and Android SDK platform 34 / build-tools 35.0.0. Open the repository root in Android Studio. `my_app/` is a separate Flutter starter and is not the Android application described here.

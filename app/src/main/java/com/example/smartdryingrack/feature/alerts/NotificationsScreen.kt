@@ -30,7 +30,7 @@ fun NotificationsScreen(onBack: () -> Unit, viewModel: NotificationsViewModel = 
             Text("Notifications", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             TextButton(onClick = viewModel::markAllRead, enabled = events.any { !it.read }) { Text("Mark all read") }
         }
-        if (events.isEmpty()) NeonFeatureRow("No notifications yet", "Connection events and accepted commands appear here.", Icons.Outlined.NotificationsNone)
+        if (events.isEmpty()) EmptyStateCard("No notifications yet", "Connection changes and accepted commands will appear in your event inbox.", Icons.Outlined.NotificationsNone)
         events.forEach { event -> key(event.id) { EventCard(event, viewModel::markRead, showBadge = false) } }
         TextButton(onClick = onBack) { Text("Back") }
     }

@@ -3,6 +3,7 @@ package com.example.smartdryingrack.feature.settings
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import com.example.smartdryingrack.BuildConfig
 import androidx.compose.ui.Modifier
 import com.example.smartdryingrack.core.designsystem.*
 
@@ -12,7 +13,7 @@ fun AboutScreen(onBack: () -> Unit) {
         SettingsHeading("About", onBack)
         GlassCard(Modifier.fillMaxWidth()) {
             Text("Smart Drying Rack", style = MaterialTheme.typography.titleLarge)
-            Text("Version 0.1.0 · Wi-Fi REST", color = AppColors.Primary)
+            Text("Version ${BuildConfig.VERSION_NAME} · Wi-Fi REST", color = AppColors.Primary)
             Text("Monitor your rack, control movement and keep a local history of events.", color = AppColors.TextSecondary)
         }
         Text("Settings, rack address and the latest 100 events are stored on this phone. The app sends status requests and commands to the rack address you choose. No cloud account is required.", color = AppColors.TextSecondary)

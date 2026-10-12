@@ -23,16 +23,19 @@ fun HomeRoute(onConnect: () -> Unit = {}, onControl: () -> Unit = {}, viewModel:
     HomeScreen(state, onConnect, onControl, viewModel::retract, message)
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(state: HomeUiState, onConnect: () -> Unit = {}, onControl: () -> Unit = {},
                onRetract: () -> Unit = {}, message: String? = null) {
     val sensors = state.sensorData?.takeIf { it.isValid }
     val online = state.connection == ConnectionState.ONLINE
     ScreenColumn {
+        ScreenHeading("Your drying dashboard", "Live readings, movement and protection")
         DeviceConnectionCard(state.connection, onConnect)
         RackHero(state.rackState, showPosition = false)
         RackStatusCard(state.rackState, state.rainConfirmed, null)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = if (androidx.compose.ui.platform.LocalConfiguration.current.fontScale > 1.3f) 1 else 3) {
             MiniSensor("Temperature", sensors?.let { "${it.temperature.roundToInt()}°C" } ?: "—", Icons.Outlined.Thermostat,
                 Color(0xFFFF687C), Modifier.weight(1f))
             MiniSensor("Humidity", sensors?.let { "${it.humidity.roundToInt()}%" } ?: "—", Icons.Outlined.WaterDrop,
@@ -49,9 +52,13 @@ fun HomeScreen(state: HomeUiState, onConnect: () -> Unit = {}, onControl: () -> 
             enabled = !manual || online && state.rackState in setOf(RackState.EXTENDED, RackState.STOPPED),
             modifier = Modifier.fillMaxWidth())
         message?.let { Text(it, color = AppColors.Primary, style = MaterialTheme.typography.bodySmall) }
-        if (!online) Text(if (sensors != null) "Offline · displayed readings are stale. Reconnect to control your rack."
-            else "Connect your rack to see live readings. The rack artwork is an illustration, not a live camera feed.",
-            style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
+        if (!online) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(if (sensors != null) "Offline · readings are stale" else "Offline · no readings yet",
+                    modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
+                TextButton(onClick = onConnect) { Text("Connect rack") }
+            }
+        }
         NeonFeatureRow("Rain protection", if (online) "Wet readings block extension. Confirmed rain requests retraction."
             else "Firmware must protect the rack while your phone is disconnected.", Icons.Outlined.Umbrella)
         if (sensors?.clothesDryPercentage != null) {

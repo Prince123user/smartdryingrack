@@ -8,6 +8,10 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import com.example.smartdryingrack.feature.alerts.NotificationsViewModel
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -81,6 +85,9 @@ enum class Destination(val route: String, @StringRes val label: Int, val icon: I
 @Composable
 fun SmartDryingRackRoot(viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val notifications: NotificationsViewModel = hiltViewModel()
+    val events by notifications.events.collectAsStateWithLifecycle()
+    val unread = events.count { !it.read }
     val view = LocalView.current
     SideEffect {
         val activity = view.context as? android.app.Activity
@@ -109,9 +116,11 @@ fun SmartDryingRackRoot(viewModel: SettingsViewModel = hiltViewModel()) {
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.BackgroundAlt),
                         actions = {
                             IconButton(onClick = { nav.navigate("notifications") { launchSingleTop = true } }) {
-                                Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = AppColors.Primary)
+                                BadgedBox(badge = { if (unread > 0) Badge { Text(if (unread > 99) "99+" else unread.toString()) } }) {
+                                    Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = AppColors.Primary)
+                                }
                             }
-                            IconButton(onClick = { nav.navigate("settings") }) {
+                            IconButton(onClick = { nav.navigate("settings") { launchSingleTop = true } }) {
                                 Icon(Icons.Default.Settings, contentDescription = "Settings", tint = if (current == "settings") AppColors.Primary else AppColors.TextPrimary)
                             }
                         }
@@ -196,6 +205,8 @@ private fun NeonNavigation(current: String?, onNavigate: (Destination) -> Unit) 
             val selected = current == destination.route
             val tint = if (selected) cyan else AppColors.TextSecondary
             Column(Modifier.weight(1f).heightIn(min = 56.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(if (selected) cyan.copy(alpha = .14f) else androidx.compose.ui.graphics.Color.Transparent)
                 .selectable(selected, role = Role.Tab, onClick = { onNavigate(destination) })
                 .padding(vertical = 5.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(destination.icon, contentDescription = null, tint = tint, modifier = Modifier.size(25.dp)

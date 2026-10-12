@@ -1,6 +1,11 @@
 package com.example.smartdryingrack.feature.device
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +31,7 @@ fun DeviceConnectionPanel(viewModel: DeviceViewModel = hiltViewModel()) {
     val firmware by viewModel.firmware.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val validation by viewModel.validation.collectAsStateWithLifecycle()
+    val focus = LocalFocusManager.current
     var address by rememberSaveable(savedAddress) { mutableStateOf(savedAddress) }
     Text("Your rack", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
     Text("Connect your phone and rack to the same Wi-Fi network.", color = AppColors.TextSecondary)
@@ -35,12 +41,19 @@ fun DeviceConnectionPanel(viewModel: DeviceViewModel = hiltViewModel()) {
         OutlinedTextField(
             value = address, onValueChange = { address = it }, label = { Text("Rack address") },
             placeholder = { Text("http://192.168.1.50") }, singleLine = true,
+            enabled = connection != ConnectionState.CONNECTING,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                if (address.isNotBlank() && connection != ConnectionState.CONNECTING) {
+                    focus.clearFocus(); viewModel.connect(address)
+                }
+            }),
             isError = validation != null, modifier = Modifier.fillMaxWidth(),
             supportingText = { Text(validation ?: "Find the IP address in your router or firmware serial output.") }
         )
         message?.let { Text(it, color = if (connection == ConnectionState.ERROR) AppColors.Danger else AppColors.TextSecondary) }
         Spacer(Modifier.height(12.dp))
-        Button(onClick = { viewModel.connect(address) }, enabled = address.isNotBlank() && connection != ConnectionState.CONNECTING,
+        Button(onClick = { focus.clearFocus(); viewModel.connect(address) }, enabled = address.isNotBlank() && connection != ConnectionState.CONNECTING,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             if (connection == ConnectionState.CONNECTING) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)

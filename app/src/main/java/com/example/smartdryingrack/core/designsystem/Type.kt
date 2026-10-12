@@ -10,6 +10,8 @@ val AppTypography = Typography(
     titleLarge = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
     titleMedium = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
     bodyLarge = TextStyle(fontSize = 16.sp),
-    bodyMedium = TextStyle(fontSize = 14.sp),
+    bodyMedium = TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
+    bodySmall = TextStyle(fontSize = 13.sp, lineHeight = 18.sp),
+    labelSmall = TextStyle(fontSize = 11.sp, lineHeight = 15.sp),
     labelMedium = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium)
 )

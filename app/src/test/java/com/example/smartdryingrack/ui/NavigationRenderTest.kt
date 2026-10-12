@@ -67,6 +67,50 @@ class NavigationRenderTest {
         compose.onNodeWithText("ESP32 rack").assertExists()
         capture("06-settings")
     }
+    @Test fun largeTextLightDashboardKeepsConnectionActionAccessible() {
+        var connectTapped = false
+        compose.runOnUiThread {
+            compose.activity.setContent {
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                val configuration = android.content.res.Configuration(androidx.compose.ui.platform.LocalConfiguration.current).apply { fontScale = 1.6f }
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, 1.6f),
+                    androidx.compose.ui.platform.LocalConfiguration provides configuration
+                ) {
+                    SmartDryingRackTheme(darkTheme = false) {
+                        Surface {
+                            Column {
+                                Text("Smart Drying Rack")
+                                com.example.smartdryingrack.feature.home.HomeScreen(
+                                    com.example.smartdryingrack.feature.home.HomeUiState(),
+                                    onConnect = { connectTapped = true })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        compose.onNodeWithText("Connect rack").performScrollTo().assertIsDisplayed().performClick()
+        compose.runOnIdle { check(connectTapped) }
+        compose.onNodeWithText("Retract rack").assertIsNotEnabled()
+        capture("09-large-text-light-dashboard")
+    }
+
+    @Test fun adaptiveLauncherIconRendersArtwork() {
+        val drawable = compose.activity.getDrawable(com.example.smartdryingrack.R.mipmap.ic_launcher)
+        check(drawable is android.graphics.drawable.AdaptiveIconDrawable)
+        checkNotNull(drawable.monochrome)
+        val bitmap = Bitmap.createBitmap(192, 192, Bitmap.Config.ARGB_8888)
+        drawable.setBounds(0, 0, 192, 192)
+        drawable.draw(Canvas(bitmap))
+        val output = File("build/outputs/ui-screenshots/08-launcher-icon.png")
+        checkNotNull(output.parentFile).mkdirs()
+        output.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val colors = mutableSetOf<Int>()
+        for (x in 48 until 144) for (y in 48 until 144) colors.add(bitmap.getPixel(x, y))
+        check(colors.size > 100) { "Icon foreground artwork did not render." }
+    }
+
     @Test fun temperatureChartRendersWithExplicitTestFixture() {
         val now = System.currentTimeMillis()
         val fixture = listOf(TemperaturePoint(now - 600000, 30f), TemperaturePoint(now - 300000, 31f), TemperaturePoint(now, 32f))
