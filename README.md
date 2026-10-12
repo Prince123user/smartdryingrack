@@ -1,2 +1,2 @@
 # smartdryingrack
-monile based/IoT
+mobile based/IoT
