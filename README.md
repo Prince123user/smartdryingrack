@@ -6,7 +6,7 @@ Android Kotlin/Compose companion for an ESP32 rack over Wi-Fi REST. The app star
 
 Use JDK 17, Gradle 8.13 and Android SDK platform 34 / build-tools 35.0.0. Open the repository root in Android Studio. `my_app/` is a separate Flutter starter and is not the Android application described here.
 
-The repository includes the full Gradle 8.13 wrapper with a pinned distribution checksum. Java and Android SDK paths are machine-local; there are no hardcoded Windows paths. In Android Studio, open this repository root and choose its embedded JDK (17 or newer) as the Gradle JDK. Install SDK platform 34 and build-tools 35.0.0 through SDK Manager.
+The repository includes the full Gradle 8.13 wrapper with a pinned distribution checksum. Hilt uses Kotlin kapt 1.9.24; no KSP plugin is required. Java and Android SDK paths are machine-local; there are no hardcoded Windows paths. In Android Studio, open this repository root and choose JDK 17 (recommended) or JDK 21 as the Gradle JDK. An IDE bundled with Java 25 must use a separate supported Gradle JDK. Install SDK platform 34 and build-tools 35.0.0 through SDK Manager.
 
 ```bash
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
