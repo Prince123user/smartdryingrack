@@ -1,6 +1,6 @@
 # Smart Drying Rack (Android, Kotlin, Compose)
 
-Phase 1 build: a working app that runs end to end on a **mock rack**, with the architecture ready for the real ESP32.
+Mobile-based IoT smart drying rack app. Phase 1 runs end to end on a **mock rack**, with the architecture ready for the real ESP32.
 
 ## Open it
 1. Android Studio (Koala or newer) > Open > this folder. Let Gradle sync. Android Studio creates the Gradle wrapper jar from `gradle-wrapper.properties`.
