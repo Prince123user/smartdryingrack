@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.smartdryingrack.core.designsystem.AppColors
 import com.example.smartdryingrack.core.designsystem.ScreenColumn
 import com.example.smartdryingrack.feature.device.DeviceConnectionPanel
 import com.example.smartdryingrack.feature.device.DeviceViewModel
@@ -22,7 +23,10 @@ fun DeviceSetupScreen(onFinishSetup: () -> Unit, viewModel: DeviceViewModel = hi
     val connection by viewModel.connection.collectAsStateWithLifecycle()
     LaunchedEffect(connection) { if (connection == ConnectionState.ONLINE) onFinishSetup() }
     ScreenColumn {
-        Text("SMART DRYING RACK", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        Text("Connect device", style = MaterialTheme.typography.headlineSmall, color = AppColors.TextPrimary,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+        Text("Connect your phone and rack to the same Wi-Fi network.",
+            style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
         com.example.smartdryingrack.core.designsystem.RackHero(com.example.smartdryingrack.domain.model.RackState.UNKNOWN, showPosition = false)
         DeviceConnectionPanel(viewModel)
         TextButton(onClick = onFinishSetup, modifier = Modifier.fillMaxWidth()) { Text("Explore offline") }

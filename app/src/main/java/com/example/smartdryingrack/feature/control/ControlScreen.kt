@@ -92,7 +92,6 @@ private fun RejectReason.res(): Int = when (this) {
 @Composable
 fun ControlScreen(state: ControlUiState, actions: ControlActions) {
     ScreenColumn {
-        ScreenHeading("Rack control", "Choose a mode and move your rack safely")
         ModeSelector(state.mode, actions::setMode, Modifier.fillMaxWidth())
 
         com.example.smartdryingrack.core.designsystem.RackHero(state.rackState)

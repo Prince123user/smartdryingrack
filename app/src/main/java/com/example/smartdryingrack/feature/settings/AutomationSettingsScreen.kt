@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartdryingrack.core.designsystem.*
+import com.example.smartdryingrack.domain.model.RackState
 import kotlin.math.roundToInt
 
 @Composable
@@ -16,6 +17,7 @@ fun AutomationSettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = 
     var threshold by remember(settings.dryThresholdPercent) { mutableStateOf(settings.dryThresholdPercent.toFloat()) }
     ScreenColumn {
         SettingsHeading("Automation", onBack)
+        RackHero(RackState.EXTENDED, showPosition = false, modifier = Modifier.heightIn(min = 170.dp, max = 225.dp))
         GlassCard(Modifier.fillMaxWidth()) {
             Text("Rain protection", style = MaterialTheme.typography.titleMedium)
             Text("Always enabled while connected. Three fresh wet readings confirm rain. Extension is blocked on the first wet reading.", color = AppColors.TextSecondary)

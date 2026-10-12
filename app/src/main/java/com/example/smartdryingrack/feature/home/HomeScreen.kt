@@ -30,7 +30,6 @@ fun HomeScreen(state: HomeUiState, onConnect: () -> Unit = {}, onControl: () -> 
     val sensors = state.sensorData?.takeIf { it.isValid }
     val online = state.connection == ConnectionState.ONLINE
     ScreenColumn {
-        ScreenHeading("Your drying dashboard", "Live readings, movement and protection")
         DeviceConnectionCard(state.connection, onConnect)
         RackHero(state.rackState, showPosition = false)
         RackStatusCard(state.rackState, state.rainConfirmed, null)

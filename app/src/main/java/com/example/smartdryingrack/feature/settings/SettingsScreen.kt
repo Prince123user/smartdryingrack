@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.example.smartdryingrack.BuildConfig
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,6 +30,11 @@ fun SettingsScreen(settings: AutomationSettings = AutomationSettings(), connecti
                    firmware: String? = null, onNavigateDevice: () -> Unit, onNavigateAutomation: () -> Unit,
                    onNavigateNotifications: () -> Unit, onNavigateAppearance: () -> Unit, onNavigateAbout: () -> Unit) {
     ScreenColumn {
+        com.example.smartdryingrack.core.designsystem.RackHero(
+            RackState.EXTENDED,
+            showPosition = false,
+            modifier = Modifier.heightIn(min = 170.dp, max = 225.dp)
+        )
         SettingsSection("Device")
         NeonFeatureRow("ESP32 rack", settings.deviceName, Icons.Outlined.Memory, onNavigateDevice)
         SettingsSection("Connection")
