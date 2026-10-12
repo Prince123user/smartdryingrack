@@ -59,6 +59,8 @@ class NavigationRenderTest {
         capture("03-alerts")
         compose.onNodeWithText("History").performClick()
         compose.onNodeWithText("Waiting for temperature history").assertExists()
+        compose.onNodeWithText("Week").performClick()
+        compose.onNodeWithText("Today").performClick()
         capture("04-history")
         compose.onNodeWithContentDescription("Notifications").performClick()
         compose.onNodeWithText("No notifications yet").assertExists()
@@ -66,6 +68,12 @@ class NavigationRenderTest {
         compose.onNodeWithContentDescription("Settings").performClick()
         compose.onNodeWithText("ESP32 rack").assertExists()
         capture("06-settings")
+        compose.onNode(hasText("Appearance") and hasClickAction()).performScrollTo().performClick()
+        compose.onNodeWithText("Midnight cyan").assertExists()
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNode(hasText("Advanced settings") and hasClickAction()).performScrollTo().performClick()
+        compose.onNodeWithText("Your rack").assertExists()
+        compose.onNodeWithContentDescription("Back").performClick()
     }
     @Test fun largeTextLightDashboardKeepsConnectionActionAccessible() {
         var connectTapped = false

@@ -21,17 +21,19 @@ fun SettingsRoute(onNavigateDevice: () -> Unit, onNavigateAutomation: () -> Unit
                   settingsViewModel: SettingsViewModel = hiltViewModel(), deviceViewModel: DeviceViewModel = hiltViewModel()) {
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val connection by deviceViewModel.connection.collectAsStateWithLifecycle()
-    SettingsScreen(settings, connection, onNavigateDevice = onNavigateDevice, onNavigateAutomation = onNavigateAutomation,
+    val rackState by deviceViewModel.rackState.collectAsStateWithLifecycle()
+    SettingsScreen(settings, connection, rackState, onNavigateDevice = onNavigateDevice, onNavigateAutomation = onNavigateAutomation,
         onNavigateNotifications = onNavigateNotifications, onNavigateAppearance = onNavigateAppearance, onNavigateAbout = onNavigateAbout)
 }
 
 @Composable
 fun SettingsScreen(settings: AutomationSettings = AutomationSettings(), connection: ConnectionState = ConnectionState.OFFLINE,
+                   rackState: RackState = RackState.UNKNOWN,
                    firmware: String? = null, onNavigateDevice: () -> Unit, onNavigateAutomation: () -> Unit,
                    onNavigateNotifications: () -> Unit, onNavigateAppearance: () -> Unit, onNavigateAbout: () -> Unit) {
     ScreenColumn {
         com.example.smartdryingrack.core.designsystem.RackHero(
-            RackState.EXTENDED,
+            rackState,
             showPosition = false,
             modifier = Modifier.heightIn(min = 170.dp, max = 225.dp)
         )

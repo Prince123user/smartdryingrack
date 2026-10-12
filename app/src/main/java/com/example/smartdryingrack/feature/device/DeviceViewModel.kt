@@ -18,6 +18,7 @@ class DeviceViewModel @Inject constructor(
     private val preferences: DevicePreferences
 ) : ViewModel() {
     val connection = rack.connection
+    val rackState = rack.rackState
     val sensorData = rack.sensorData
     val address = preferences.address
     val firmware = controller.firmware

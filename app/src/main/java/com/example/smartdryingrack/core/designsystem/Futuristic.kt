@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.smartdryingrack.R
@@ -127,7 +128,11 @@ fun NeonAction(label: String, icon: ImageVector, onClick: () -> Unit, enabled: B
 @Composable
 fun NeonFeatureRow(title: String, description: String, icon: ImageVector, onClick: (() -> Unit)? = null,
                    accent: Color = AppColors.Primary) {
-    GlassCard(if (onClick != null) Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick) else Modifier.fillMaxWidth(), accent) {
+    GlassCard(if (onClick != null) {
+        Modifier.fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {}
+    } else Modifier.fillMaxWidth(), accent) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             NeonIcon(icon, accent)
             Spacer(Modifier.width(12.dp))
