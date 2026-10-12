@@ -1,40 +1,30 @@
 package com.example.smartdryingrack.feature.history
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.smartdryingrack.R
-import com.example.smartdryingrack.core.designsystem.AppColors
-import com.example.smartdryingrack.core.designsystem.Dimens
-import com.example.smartdryingrack.core.designsystem.GlassCard
-import com.example.smartdryingrack.core.designsystem.ScreenColumn
+import com.example.smartdryingrack.core.designsystem.*
+import com.example.smartdryingrack.data.repository.TemperaturePoint
+import com.example.smartdryingrack.feature.alerts.*
+import java.time.LocalDate
+import java.time.ZoneId
 
 @Composable
 fun HistoryRoute(viewModel: HistoryViewModel = hiltViewModel()) {
@@ -44,107 +34,80 @@ fun HistoryRoute(viewModel: HistoryViewModel = hiltViewModel()) {
 
 @Composable
 fun HistoryScreen(state: HistoryUiState) {
+    val context = LocalContext.current
+    var week by rememberSaveable { mutableStateOf(false) }
+    val start = if (week) System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
+        else LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val points = state.temperatures.filter { it.timestamp >= start }
     ScreenColumn {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("History", style = MaterialTheme.typography.headlineMedium, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(AppColors.Card)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            ) {
-                Text("7 Days ▾", color = AppColors.Primary, style = MaterialTheme.typography.labelMedium)
-            }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NeonAction("Today", Icons.Outlined.Today, { week = false }, modifier = Modifier.weight(1f),
+                accent = if (!week) AppColors.Primary else AppColors.TextSecondary)
+            NeonAction("Week", Icons.Outlined.DateRange, { week = true }, modifier = Modifier.weight(1f),
+                accent = if (week) AppColors.Primary else AppColors.TextSecondary)
         }
-
-        Spacer(Modifier.height(4.dp))
-
-        // 3 Stat Cards Row
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCard("3h 20m", "Avg. Drying Time", "↓ 18%", AppColors.Success, Modifier.weight(1f))
-            StatCard(state.rainSaves.coerceAtLeast(4).toString(), "Rain Saves", "↑ 2", AppColors.Success, Modifier.weight(1f))
-            StatCard("12", "Sessions", "↑ 3", AppColors.Success, Modifier.weight(1f))
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // Bar Chart Card
-        GlassCard(Modifier.fillMaxWidth()) {
-            Text("Drying Time (hours)", style = MaterialTheme.typography.titleMedium, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(16.dp))
-
-            val days = listOf("Mon" to 2.1f, "Tue" to 2.8f, "Wed" to 3.4f, "Thu" to 3.1f, "Fri" to 3.2f, "Sat" to 3.9f, "Sun" to 2.9f)
-            val maxVal = 4.0f
-
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(140.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                days.forEach { (day, value) ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Bottom,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(value.toString(), style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
-                        Spacer(Modifier.height(4.dp))
-                        Box(
-                            Modifier
-                                .width(18.dp)
-                                .height((100 * (value / maxVal)).dp)
-                                .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
-                                .background(AppColors.Primary)
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Text(day, style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // Recent Events
-        GlassCard(Modifier.fillMaxWidth()) {
-            Text("Recent Events", style = MaterialTheme.typography.titleMedium, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(12.dp))
-
-            val events = listOf(
-                "Rack retracted (rain)" to "2:14 PM",
-                "Clothes dry alert" to "11:30 AM",
-                "Rack extended (schedule)" to "8:00 AM",
-                "Rack retracted (manual)" to "Yesterday"
-            )
-
-            events.forEachIndexed { index, (title, time) ->
-                if (index > 0) HorizontalDivider(color = AppColors.Border, modifier = Modifier.padding(vertical = 10.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(title, color = AppColors.TextPrimary, style = MaterialTheme.typography.bodyMedium)
-                    Text(time, color = AppColors.TextSecondary, style = MaterialTheme.typography.labelMedium)
-                }
+        Text("Temperature trend (°C)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        TemperatureChart(points)
+        Text("Measurements are saved every five minutes while the app is connected.",
+            style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
+        Text("Rack activity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        if (state.recent.isEmpty()) NeonFeatureRow("No activity yet", "Connect your rack to start its local timeline.", Icons.Outlined.History)
+        state.recent.take(100).forEach { event ->
+            key(event.id) {
+                NeonFeatureRow(stringResource(event.type.titleRes()), eventTime(context, event.timestamp), event.type.eventIcon(),
+                    accent = event.type.severity.color())
             }
         }
     }
 }
 
 @Composable
-private fun StatCard(value: String, label: String, trend: String, trendColor: androidx.compose.ui.graphics.Color, modifier: Modifier) {
-    GlassCard(modifier) {
-        Text(value, style = MaterialTheme.typography.titleLarge, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(2.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
-        Spacer(Modifier.height(4.dp))
-        Text(trend, style = MaterialTheme.typography.labelSmall, color = trendColor, fontWeight = FontWeight.Bold)
+fun TemperatureChart(points: List<TemperaturePoint>) {
+    val cyan = AppColors.Primary
+    val grid = AppColors.Border
+    GlassCard(Modifier.fillMaxWidth()) {
+        if (points.size < 2) {
+            Column(Modifier.fillMaxWidth().height(164.dp), verticalArrangement = Arrangement.Center) {
+                Text("Waiting for temperature history", fontWeight = FontWeight.SemiBold, color = AppColors.TextPrimary)
+                Text("Two recorded measurements are needed for a trend. No sample chart is shown.",
+                    color = AppColors.TextSecondary, style = MaterialTheme.typography.bodySmall)
+            }
+        } else {
+            val low = points.minOf { it.celsius } - 1f
+            val high = points.maxOf { it.celsius } + 1f
+            Text(String.format(java.util.Locale.getDefault(), "%.1f°C · latest reading", points.last().celsius), color = cyan, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth().height(170.dp)) {
+                Column(Modifier.width(36.dp).fillMaxHeight().padding(vertical = 12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                    repeat(5) { index ->
+                        Text(String.format(java.util.Locale.getDefault(), "%.0f", high - (high - low) * index / 4f),
+                            style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
+                    }
+                }
+                Canvas(Modifier.weight(1f).fillMaxHeight().padding(vertical = 12.dp)) {
+                    repeat(5) { row ->
+                        val y = size.height * row / 4f
+                        drawLine(grid.copy(alpha = .55f), Offset(0f, y), Offset(size.width, y), .6.dp.toPx())
+                    }
+                    val duration = (points.last().timestamp - points.first().timestamp).coerceAtLeast(1).toFloat()
+                    val line = Path()
+                    val positions = points.map { Offset((it.timestamp - points.first().timestamp) / duration * size.width,
+                        size.height * (1f - (it.celsius - low) / (high - low))) }
+                    positions.forEachIndexed { index, position -> if (index == 0) line.moveTo(position.x, position.y) else line.lineTo(position.x, position.y) }
+                    val fill = Path().apply { addPath(line); lineTo(size.width, size.height); lineTo(0f, size.height); close() }
+                    drawPath(fill, Brush.verticalGradient(listOf(cyan.copy(alpha = .28f), Color.Transparent)))
+                    drawPath(line, cyan.copy(alpha = .14f), style = Stroke(9.dp.toPx(), cap = StrokeCap.Round))
+                    drawPath(line, cyan, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
+                    val last = positions.last()
+                    drawCircle(cyan.copy(alpha = .16f), 8.dp.toPx(), last)
+                    drawCircle(cyan, 3.dp.toPx(), last)
+                }
+            }
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM d HH:mm")
+            fun time(timestamp: Long) = formatter.format(java.time.Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(time(points.first().timestamp), style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
+                Text(time(points.last().timestamp), style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
+            }
+        }
     }
 }

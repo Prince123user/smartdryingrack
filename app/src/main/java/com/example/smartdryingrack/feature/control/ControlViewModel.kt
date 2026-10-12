@@ -2,7 +2,6 @@ package com.example.smartdryingrack.feature.control
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartdryingrack.data.hardware.DeviceSimulator
 import com.example.smartdryingrack.data.repository.RackRepository
 import com.example.smartdryingrack.data.repository.ScheduleRepository
 import com.example.smartdryingrack.data.repository.SettingsRepository
@@ -30,18 +29,16 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 import javax.inject.Inject
 
-data class DemoState(val rain: Boolean = false, val sensorError: Boolean = false, val offline: Boolean = false)
-
 data class ControlUiState(
-    val mode: RackMode = RackMode.AUTO,
+    val mode: RackMode = RackMode.MANUAL,
     val rackState: RackState = RackState.UNKNOWN,
     val connection: ConnectionState = ConnectionState.OFFLINE,
     val lastCommand: LastCommand? = null,
     val lastUpdated: Long? = null,
-    val availability: ControlAvailability = ControlAvailability(null, null, null),
+    val availability: ControlAvailability = computeAvailability(RackState.UNKNOWN, RackMode.MANUAL, ConnectionState.OFFLINE),
     val schedule: RackSchedule = RackSchedule(),
     val settings: AutomationSettings = AutomationSettings(),
-    val demo: DemoState = DemoState(),
+    val pendingMovement: RackState? = null,
     val rejection: RejectReason? = null
 )
 
@@ -54,22 +51,15 @@ interface ControlActions {
     fun setRetractTime(time: LocalTime)
     fun setDay(day: DayOfWeek, enabled: Boolean)
     fun setUseWeather(enabled: Boolean)
-    fun setBuzzer(enabled: Boolean)
-    fun setDemoRain(on: Boolean)
-    fun setDemoSensorError(on: Boolean)
-    fun setDemoOffline(offline: Boolean)
-    fun demoClothesDry()
 }
 
 @HiltViewModel
 class ControlViewModel @Inject constructor(
     private val rack: RackRepository,
     private val schedules: ScheduleRepository,
-    private val settings: SettingsRepository,
-    private val simulator: DeviceSimulator
+    private val settings: SettingsRepository
 ) : ViewModel(), ControlActions {
 
-    private val demo = MutableStateFlow(DemoState())
     private val rejection = MutableStateFlow<RejectReason?>(null)
 
     private val base = combine(
@@ -86,8 +76,11 @@ class ControlViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<ControlUiState> =
-        combine(base, schedules.schedule, settings.settings, demo, rejection) { b, sch, set, d, rej ->
-            b.copy(schedule = sch, settings = set, demo = d, rejection = rej)
+        combine(base, schedules.schedule, settings.settings, rejection, rack.pendingMovement) { b, sch, set, rej, pending ->
+            b.copy(schedule = sch, settings = set, rejection = rej, pendingMovement = pending,
+                availability = if (pending == null) b.availability else b.availability.copy(
+                    extend = com.example.smartdryingrack.domain.model.Unavailable.MOVING,
+                    retract = com.example.smartdryingrack.domain.model.Unavailable.MOVING))
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ControlUiState())
 
     override fun setMode(mode: RackMode) {
@@ -110,26 +103,4 @@ class ControlViewModel @Inject constructor(
     override fun setRetractTime(time: LocalTime) = schedules.update { it.copy(retractTime = time) }
     override fun setDay(day: DayOfWeek, enabled: Boolean) = schedules.update { it.withDay(day, enabled) }
     override fun setUseWeather(enabled: Boolean) = settings.update { it.copy(useWeather = enabled) }
-    override fun setBuzzer(enabled: Boolean) = settings.update { it.copy(buzzer = enabled) }
-
-    override fun setDemoRain(on: Boolean) {
-        demo.update { it.copy(rain = on) }
-        simulator.setRain(on)
-    }
-
-    override fun setDemoSensorError(on: Boolean) {
-        demo.update { it.copy(sensorError = on) }
-        simulator.setSensorError(on)
-    }
-
-    override fun setDemoOffline(offline: Boolean) {
-        demo.update { it.copy(offline = offline) }
-        viewModelScope.launch { simulator.setOffline(offline) }
-    }
-
-    override fun demoClothesDry() = simulator.setClothesDry(DEMO_DRY_PERCENT)
-
-    private companion object {
-        const val DEMO_DRY_PERCENT = 95
-    }
 }

@@ -11,6 +11,8 @@ import com.example.smartdryingrack.domain.model.RackMode
 import com.example.smartdryingrack.domain.model.RackState
 import com.example.smartdryingrack.domain.model.RejectReason
 import com.example.smartdryingrack.domain.model.SensorData
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,8 +43,15 @@ class RackRepository @Inject constructor(
     private val mutex = Mutex()
     private val fault = MutableStateFlow(false)
     private var emergencyHold = false
+    private var movementWatch: Job? = null
+    private val _pendingMovement = MutableStateFlow<RackState?>(null)
+    val pendingMovement = _pendingMovement.asStateFlow()
+    private var pendingTarget: RackState?
+        get() = _pendingMovement.value
+        set(value) { _pendingMovement.value = value }
+    private var movementVersion = 0L
 
-    private val _mode = MutableStateFlow(RackMode.AUTO)
+    private val _mode = MutableStateFlow(RackMode.MANUAL)
     val mode: StateFlow<RackMode> = _mode.asStateFlow()
 
     private val _lastCommand = MutableStateFlow<LastCommand?>(null)
@@ -62,11 +71,16 @@ class RackRepository @Inject constructor(
     val connection: StateFlow<ConnectionState> =
         controller.observeConnection().stateIn(scope, SharingStarted.Eagerly, ConnectionState.OFFLINE)
 
-    suspend fun connect() = controller.connect()
+    suspend fun connect() = mutex.withLock {
+        movementWatch?.cancel()
+        movementVersion++
+        pendingTarget = null
+        fault.value = false
+        controller.connect()
+    }
 
     fun setMode(mode: RackMode) {
         _mode.value = mode
-        if (mode == RackMode.AUTO) emergencyHold = false
     }
 
     fun setRainConfirmed(value: Boolean) { _rainConfirmed.value = value }
@@ -78,14 +92,20 @@ class RackRepository @Inject constructor(
         if (action != RackAction.EXTEND && action != RackAction.RETRACT && action != RackAction.STOP) {
             return CommandResult.Rejected(RejectReason.NOT_A_COMMAND)
         }
+        if (action == RackAction.STOP && source == CommandSource.EMERGENCY) emergencyHold = true
         if (connection.value != ConnectionState.ONLINE) return CommandResult.Rejected(RejectReason.OFFLINE)
 
         if (action == RackAction.STOP) {
             try {
                 controller.stop()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                events.record(EventType.DEVICE_ERROR)
                 return CommandResult.Rejected(RejectReason.ERROR)
             }
+            movementWatch?.cancel()
+            movementVersion++
+            pendingTarget = null
             if (source == CommandSource.EMERGENCY) {
                 emergencyHold = true
                 events.record(EventType.EMERGENCY_STOP)
@@ -94,18 +114,26 @@ class RackRepository @Inject constructor(
             return CommandResult.Accepted
         }
 
-        if (emergencyHold) {
-            if (source == CommandSource.MANUAL) emergencyHold = false
-            else return CommandResult.Rejected(RejectReason.EMERGENCY_HOLD)
+        val sensor = sensorData.value
+        if (action == RackAction.EXTEND && (sensor == null || !sensor.isValid ||
+                System.currentTimeMillis() - sensor.timestamp !in 0..6000 || sensor.rainDetected || rainConfirmed.value)) {
+            return CommandResult.Rejected(RejectReason.ERROR)
+        }
+        if (rackState.value in setOf(RackState.UNKNOWN, RackState.ERROR)) return CommandResult.Rejected(RejectReason.ERROR)
+        if (source == CommandSource.MANUAL && mode.value != RackMode.MANUAL) return CommandResult.Rejected(RejectReason.BUSY)
+        if (pendingTarget != null && source.ordinal > CommandSource.RAIN.ordinal) return CommandResult.Rejected(RejectReason.BUSY)
+
+        if (emergencyHold && source != CommandSource.MANUAL) {
+            return CommandResult.Rejected(RejectReason.EMERGENCY_HOLD)
         }
 
         val state = rackState.value
         val target = if (action == RackAction.EXTEND) RackState.EXTENDED else RackState.RETRACTED
         val sameMotion = (action == RackAction.EXTEND && state == RackState.EXTENDING) ||
             (action == RackAction.RETRACT && state == RackState.RETRACTING)
-        if (state == target || sameMotion) return CommandResult.Rejected(RejectReason.ALREADY_THERE)
+        if ((state == target && pendingTarget == null) || sameMotion && pendingTarget == target) return CommandResult.Rejected(RejectReason.ALREADY_THERE)
 
-        val moving = state == RackState.EXTENDING || state == RackState.RETRACTING
+        val moving = pendingTarget != null || state == RackState.EXTENDING || state == RackState.RETRACTING
         try {
             if (moving) {
                 if (source.ordinal <= CommandSource.RAIN.ordinal) controller.stop()
@@ -114,25 +142,38 @@ class RackRepository @Inject constructor(
             fault.value = false
             if (action == RackAction.EXTEND) controller.extend() else controller.retract()
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            fault.value = true
+            emergencyHold = true
+            events.record(EventType.DEVICE_ERROR)
             return CommandResult.Rejected(RejectReason.ERROR)
         }
 
+        if (source == CommandSource.MANUAL) emergencyHold = false
         _lastCommand.value = LastCommand(action, source, System.currentTimeMillis())
         eventFor(action, source)?.let { events.record(it) }
-        watchMovement(target)
+        watchMovement(target, System.currentTimeMillis())
         return CommandResult.Accepted
     }
 
-    private fun watchMovement(target: RackState) {
-        scope.launch {
+    private fun watchMovement(target: RackState, acceptedAt: Long) {
+        movementWatch?.cancel()
+        pendingTarget = target
+        val version = ++movementVersion
+        movementWatch = scope.launch {
             val reached = withTimeoutOrNull(MOVE_TIMEOUT_MS) {
-                controller.observeRackState().first { it == target }
+                combine(controller.observeRackState(), controller.observeSensorData()) { state, sample ->
+                    state == target && sample != null && sample.timestamp > acceptedAt
+                }.first { it }
             }
-            val s = rackState.value
-            if (reached == null && (s == RackState.EXTENDING || s == RackState.RETRACTING)) {
-                runCatching { controller.stop() }
-                fault.value = true
-                events.record(EventType.DEVICE_ERROR)
+            mutex.withLock {
+                if (version != movementVersion) return@withLock
+                pendingTarget = null
+                if (reached == null) {
+                    try { controller.stop() } catch (e: Exception) { if (e is CancellationException) throw e }
+                    fault.value = true
+                    events.record(EventType.DEVICE_ERROR)
+                }
             }
         }
     }

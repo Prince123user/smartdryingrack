@@ -1,8 +1,11 @@
 package com.example.smartdryingrack.feature.alerts
 
 import android.content.Context
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
 import android.text.format.DateUtils
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.example.smartdryingrack.R
 import com.example.smartdryingrack.core.designsystem.AppColors
@@ -45,6 +48,7 @@ fun EventType.descRes(): Int = when (this) {
     EventType.SENSOR_INVALID -> R.string.ev_sensor_invalid_d
 }
 
+@Composable
 fun Severity.color(): Color = when (this) {
     Severity.INFO -> AppColors.Primary
     Severity.SUCCESS -> AppColors.Success
@@ -57,3 +61,13 @@ fun eventTime(context: Context, timestamp: Long): String = DateUtils.formatDateT
     timestamp,
     DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_ALL
 )
+
+fun EventType.eventIcon(): androidx.compose.ui.graphics.vector.ImageVector = when (this) {
+    EventType.RAIN_DETECTED, EventType.RAIN_RETRACT, EventType.FORECAST_RETRACT, EventType.FORECAST_SKIP -> androidx.compose.material.icons.Icons.Outlined.Umbrella
+    EventType.CLOTHES_DRY -> androidx.compose.material.icons.Icons.Outlined.CheckCircle
+    EventType.MANUAL_EXTEND, EventType.SCHEDULE_EXTEND -> androidx.compose.material.icons.Icons.Outlined.KeyboardDoubleArrowUp
+    EventType.MANUAL_RETRACT, EventType.SCHEDULE_RETRACT -> androidx.compose.material.icons.Icons.Outlined.KeyboardDoubleArrowDown
+    EventType.DEVICE_CONNECTED, EventType.DEVICE_DISCONNECTED -> androidx.compose.material.icons.Icons.Outlined.Wifi
+    EventType.EMERGENCY_STOP -> androidx.compose.material.icons.Icons.Outlined.StopCircle
+    EventType.DEVICE_ERROR, EventType.SENSOR_INVALID -> androidx.compose.material.icons.Icons.Outlined.Warning
+}

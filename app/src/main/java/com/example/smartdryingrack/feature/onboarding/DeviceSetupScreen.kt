@@ -1,196 +1,32 @@
 package com.example.smartdryingrack.feature.onboarding
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.smartdryingrack.core.designsystem.AppColors
-import com.example.smartdryingrack.core.designsystem.Dimens
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.smartdryingrack.core.designsystem.ScreenColumn
+import com.example.smartdryingrack.feature.device.DeviceConnectionPanel
+import com.example.smartdryingrack.feature.device.DeviceViewModel
+import com.example.smartdryingrack.domain.model.ConnectionState
 
 @Composable
-fun DeviceSetupScreen(onFinishSetup: () -> Unit) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(AppColors.Background, AppColors.BackgroundAlt)))
-            .padding(Dimens.ScreenPadding)
-    ) {
-        Column(
-            Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.Start
-        ) {
-            Column {
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    "Device Setup",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = AppColors.TextSecondary
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    "Connect Your Rack",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = AppColors.TextPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    "Connect your Smart Drying Rack to get started.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AppColors.TextSecondary
-                )
-
-                Spacer(Modifier.height(32.dp))
-
-                ConnectionOptionCard(
-                    title = "Wi-Fi",
-                    badge = "Recommended",
-                    subtitle = "Connect over your home network",
-                    iconType = 0,
-                    onClick = onFinishSetup
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                ConnectionOptionCard(
-                    title = "Bluetooth",
-                    badge = null,
-                    subtitle = "Connect directly",
-                    iconType = 1,
-                    onClick = onFinishSetup
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                ConnectionOptionCard(
-                    title = "Demo Mode",
-                    badge = null,
-                    subtitle = "Try the app without hardware",
-                    iconType = 2,
-                    onClick = onFinishSetup
-                )
-            }
-
-            Column(
-                Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = onFinishSetup,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = Dimens.ButtonHeight),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
-                ) {
-                    Text("Scan for Devices", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    "Need help? View setup guide",
-                    color = AppColors.Primary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.clickable(onClick = onFinishSetup)
-                )
-                Spacer(Modifier.height(16.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ConnectionOptionCard(
-    title: String,
-    badge: String?,
-    subtitle: String,
-    iconType: Int,
-    onClick: () -> Unit
-) {
-    val shape = RoundedCornerShape(16.dp)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(AppColors.Card)
-            .border(1.dp, AppColors.Border, shape)
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(AppColors.Primary.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            when (iconType) {
-                0 -> WifiIcon(color = AppColors.Primary, modifier = Modifier.size(24.dp))
-                1 -> BluetoothIcon(color = AppColors.Primary, modifier = Modifier.size(24.dp))
-                else -> Icon(Icons.Default.PlayArrow, contentDescription = null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
-            }
-        }
-
-        Spacer(Modifier.width(16.dp))
-
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
-                if (badge != null) {
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(AppColors.Success.copy(alpha = 0.2f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(badge, color = AppColors.Success, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-            Spacer(Modifier.height(2.dp))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
-        }
-
-        ChevronRightIcon(color = AppColors.TextSecondary, modifier = Modifier.size(16.dp))
+fun DeviceSetupScreen(onFinishSetup: () -> Unit, viewModel: DeviceViewModel = hiltViewModel()) {
+    val connection by viewModel.connection.collectAsStateWithLifecycle()
+    LaunchedEffect(connection) { if (connection == ConnectionState.ONLINE) onFinishSetup() }
+    ScreenColumn {
+        Text("SMART DRYING RACK", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        com.example.smartdryingrack.core.designsystem.RackHero(com.example.smartdryingrack.domain.model.RackState.UNKNOWN, showPosition = false)
+        DeviceConnectionPanel(viewModel)
+        TextButton(onClick = onFinishSetup, modifier = Modifier.fillMaxWidth()) { Text("Explore offline") }
+        Text("Offline mode shows no live readings and cannot control your rack.", style = MaterialTheme.typography.bodySmall)
     }
 }
 

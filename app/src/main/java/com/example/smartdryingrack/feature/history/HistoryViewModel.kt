@@ -8,7 +8,9 @@ import com.example.smartdryingrack.domain.model.RackEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import com.example.smartdryingrack.data.repository.TemperatureHistory
+import com.example.smartdryingrack.data.repository.TemperaturePoint
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -17,7 +19,8 @@ data class HistoryUiState(
     val manualOps: Int = 0,
     val autoOps: Int = 0,
     val dryAlerts: Int = 0,
-    val recent: List<RackEvent> = emptyList()
+    val recent: List<RackEvent> = emptyList(),
+    val temperatures: List<TemperaturePoint> = emptyList()
 )
 
 private val MANUAL = setOf(EventType.MANUAL_EXTEND, EventType.MANUAL_RETRACT)
@@ -26,14 +29,15 @@ private val AUTOMATIC = setOf(
 )
 
 @HiltViewModel
-class HistoryViewModel @Inject constructor(log: EventLog) : ViewModel() {
-    val uiState: StateFlow<HistoryUiState> = log.events.map { events ->
+class HistoryViewModel @Inject constructor(log: EventLog, temperatureHistory: TemperatureHistory) : ViewModel() {
+    val uiState: StateFlow<HistoryUiState> = combine(log.events, temperatureHistory.points) { events, temperatures ->
         HistoryUiState(
             rainSaves = events.count { it.type == EventType.RAIN_RETRACT },
             manualOps = events.count { it.type in MANUAL },
             autoOps = events.count { it.type in AUTOMATIC },
             dryAlerts = events.count { it.type == EventType.CLOTHES_DRY },
-            recent = events
+            recent = events,
+            temperatures = temperatures
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HistoryUiState())
 }

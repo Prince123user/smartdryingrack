@@ -15,14 +15,14 @@
     <string name="conn_connecting">Connecting…</string>
     <string name="conn_error">Error</string>
 
-    <string name="rack_out_title">RACK OUT</string>
-    <string name="rack_in_title">RACK IN</string>
+    <string name="rack_out_title">Rack extended</string>
+    <string name="rack_in_title">Rack retracted</string>
     <string name="rack_extending">EXTENDING…</string>
     <string name="rack_retracting">RETRACTING…</string>
     <string name="rack_stopped">STOPPED</string>
     <string name="rack_error">RACK ERROR</string>
-    <string name="rack_unknown">STATUS UNKNOWN</string>
-    <string name="rack_rain_title">RAIN DETECTED</string>
+    <string name="rack_unknown">Position unknown</string>
+    <string name="rack_rain_title">Rain detected</string>
     <string name="rack_rain_sub">Protecting your clothes</string>
     <string name="rack_out_sub_default">Drying in progress</string>
     <string name="rack_in_sub">Your clothes are protected</string>
@@ -39,7 +39,7 @@
     <string name="value_percent">%1$d%%</string>
     <string name="value_unknown">--</string>
     <string name="rain_dry">DRY</string>
-    <string name="rain_detected">RAIN DETECTED</string>
+    <string name="rain_detected">Rain detected</string>
     <string name="rain_wet">WET</string>
     <string name="rain_unknown">UNKNOWN</string>
     <string name="stale_offline">Offline. Last updated %1$s.</string>
@@ -53,7 +53,7 @@
 
     <string name="drying_progress_title">Drying progress</string>
     <string name="drying_remaining">About %1$s left (estimate)</string>
-    <string name="clothes_ready">Clothes are dry. Ready to take in.</string>
+    <string name="clothes_ready">Dryness target reached. Check your clothes before collecting them.</string>
     <string name="duration_hm">%1$dh %2$dm</string>
     <string name="duration_m">%1$dm</string>
 
@@ -121,30 +121,30 @@
 
     <string name="ev_rain_detected_t">Rain detected</string>
     <string name="ev_rain_detected_d">The rain sensor confirmed rain.</string>
-    <string name="ev_rain_retract_t">Rack retracted (rain)</string>
-    <string name="ev_rain_retract_d">Your drying rack was automatically retracted.</string>
+    <string name="ev_rain_retract_t">Rain retraction requested</string>
+    <string name="ev_rain_retract_d">The rack accepted a rain-protection command. Check telemetry for completion.</string>
     <string name="ev_forecast_skip_t">Rack extension skipped</string>
     <string name="ev_forecast_skip_d">Rain probability is too high.</string>
-    <string name="ev_forecast_retract_t">Rack retracted (forecast)</string>
+    <string name="ev_forecast_retract_t">Forecast retraction requested</string>
     <string name="ev_forecast_retract_d">Rain is likely soon.</string>
-    <string name="ev_clothes_dry_t">Clothes are dry</string>
-    <string name="ev_clothes_dry_d">Ready to take in.</string>
-    <string name="ev_schedule_extend_t">Rack extended (schedule)</string>
-    <string name="ev_schedule_extend_d">The scheduled extension ran.</string>
-    <string name="ev_schedule_retract_t">Rack retracted (schedule)</string>
-    <string name="ev_schedule_retract_d">The scheduled retraction ran.</string>
-    <string name="ev_manual_extend_t">Rack extended (manual)</string>
-    <string name="ev_manual_extend_d">You extended the rack.</string>
-    <string name="ev_manual_retract_t">Rack retracted (manual)</string>
-    <string name="ev_manual_retract_d">You retracted the rack.</string>
+    <string name="ev_clothes_dry_t">Dryness target reached</string>
+    <string name="ev_clothes_dry_d">Check your clothes before collecting them.</string>
+    <string name="ev_schedule_extend_t">Scheduled extension requested</string>
+    <string name="ev_schedule_extend_d">The rack accepted a scheduled extension command.</string>
+    <string name="ev_schedule_retract_t">Scheduled retraction requested</string>
+    <string name="ev_schedule_retract_d">The rack accepted a scheduled retraction command.</string>
+    <string name="ev_manual_extend_t">Manual extension requested</string>
+    <string name="ev_manual_extend_d">The rack accepted your extension command.</string>
+    <string name="ev_manual_retract_t">Manual retraction requested</string>
+    <string name="ev_manual_retract_d">The rack accepted your retraction command.</string>
     <string name="ev_emergency_stop_t">Emergency stop</string>
     <string name="ev_emergency_stop_d">Automation is paused until you send a manual command.</string>
     <string name="ev_device_connected_t">Device connected</string>
     <string name="ev_device_connected_d">The drying rack is online.</string>
     <string name="ev_device_disconnected_t">Device disconnected</string>
     <string name="ev_device_disconnected_d">Unable to reach the drying rack.</string>
-    <string name="ev_device_error_t">Rack didn\'t finish moving</string>
-    <string name="ev_device_error_d">The move timed out and the rack was stopped.</string>
+    <string name="ev_device_error_t">Rack needs attention</string>
+    <string name="ev_device_error_d">A movement timed out or a command could not be confirmed. Inspect the rack before reconnecting.</string>
     <string name="ev_sensor_invalid_t">Invalid sensor reading</string>
     <string name="ev_sensor_invalid_d">Bad readings are being ignored.</string>
 

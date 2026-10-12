@@ -122,4 +122,22 @@ class AutomationTest {
         val offline = computeAvailability(RackState.EXTENDED, RackMode.MANUAL, ConnectionState.OFFLINE)
         assertEquals(Unavailable.OFFLINE, offline.stop)
     }
+    @Test fun unknownPositionBlocksManualMovementButAllowsStop() {
+        val availability = computeAvailability(RackState.UNKNOWN, RackMode.MANUAL, ConnectionState.ONLINE)
+        assertEquals(Unavailable.UNSAFE, availability.extend)
+        assertEquals(Unavailable.UNSAFE, availability.retract)
+        assertNull(availability.stop)
+    }
+
+    @Test fun reconnectRequiresThreeNewRainReadings() {
+        val d = RainDebouncer(3)
+        repeat(3) { d.onReading(true) }
+        assertTrue(d.confirmed)
+        d.reset()
+        assertFalse(d.confirmed)
+        assertFalse(d.onReading(true))
+        assertFalse(d.onReading(true))
+        assertTrue(d.onReading(true))
+    }
+
 }

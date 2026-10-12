@@ -14,7 +14,7 @@ interface RackController {
     suspend fun retract()
     suspend fun stop()
     fun observeRackState(): Flow<RackState>
-    fun observeSensorData(): Flow<SensorData>
+    fun observeSensorData(): Flow<SensorData?>
     fun observeConnection(): Flow<ConnectionState>
     suspend fun connect()
     suspend fun disconnect()

@@ -1,7 +1,22 @@
 package com.example.smartdryingrack.core.navigation
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.material.icons.outlined.*
+import com.example.smartdryingrack.core.designsystem.LocalDarkTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
@@ -20,6 +35,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.smartdryingrack.feature.settings.SettingsViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -49,21 +71,33 @@ import com.example.smartdryingrack.feature.settings.NotificationSettingsScreen
 import com.example.smartdryingrack.feature.settings.SettingsRoute
 
 enum class Destination(val route: String, @StringRes val label: Int, val icon: ImageVector) {
-    HOME("home", R.string.nav_home, Icons.Default.Home),
-    CONTROL("control", R.string.nav_control, Icons.Default.Build),
-    ALERTS("alerts", R.string.nav_alerts, Icons.Default.Notifications),
-    HISTORY("history", R.string.nav_history, Icons.Default.DateRange)
+    HOME("home", R.string.nav_home, Icons.Outlined.Home),
+    CONTROL("control", R.string.nav_control, Icons.Outlined.Tune),
+    ALERTS("alerts", R.string.nav_alerts, Icons.Outlined.Notifications),
+    HISTORY("history", R.string.nav_history, Icons.Outlined.BarChart)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SmartDryingRackRoot() {
-    SmartDryingRackTheme {
+fun SmartDryingRackRoot(viewModel: SettingsViewModel = hiltViewModel()) {
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val view = LocalView.current
+    SideEffect {
+        val activity = view.context as? android.app.Activity
+        activity?.let {
+            WindowCompat.getInsetsController(it.window, view).apply {
+                isAppearanceLightStatusBars = !settings.darkTheme
+                isAppearanceLightNavigationBars = !settings.darkTheme
+            }
+        }
+    }
+    val initialRoute = remember { if (viewModel.address.value.isBlank()) "device_setup" else "home" }
+    SmartDryingRackTheme(darkTheme = settings.darkTheme) {
         val nav = rememberNavController()
         val backStack by nav.currentBackStackEntryAsState()
         val current = backStack?.destination?.route
 
-        val showBottomBar = current in Destination.entries.map { it.route }
+        val showBottomBar = current in Destination.entries.map { it.route } || current in listOf("settings", "notifications")
         val showTopBar = showBottomBar
 
         Scaffold(
@@ -71,17 +105,14 @@ fun SmartDryingRackRoot() {
             topBar = {
                 if (showTopBar) {
                     TopAppBar(
-                        title = { Text("Smart Drying Rack", color = AppColors.TextPrimary) },
+                        title = { Text("Smart Drying Rack", color = AppColors.TextPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.BackgroundAlt),
                         actions = {
-                            IconButton(onClick = { nav.navigate("notifications") }) {
-                                Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = AppColors.Primary)
-                            }
-                            IconButton(onClick = { nav.navigate("device_settings") }) {
-                                Icon(Icons.Default.Info, contentDescription = "Device", tint = AppColors.Primary)
+                            IconButton(onClick = { nav.navigate("notifications") { launchSingleTop = true } }) {
+                                Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = AppColors.Primary)
                             }
                             IconButton(onClick = { nav.navigate("settings") }) {
-                                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = AppColors.TextPrimary)
+                                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = if (current == "settings") AppColors.Primary else AppColors.TextPrimary)
                             }
                         }
                     )
@@ -89,26 +120,19 @@ fun SmartDryingRackRoot() {
             },
             bottomBar = {
                 if (showBottomBar) {
-                    NavigationBar(containerColor = AppColors.BackgroundAlt) {
-                        Destination.entries.forEach { d ->
-                            NavigationBarItem(
-                                selected = current == d.route,
-                                onClick = {
-                                    nav.navigate(d.route) {
-                                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(d.icon, contentDescription = null) },
-                                label = { Text(stringResource(d.label)) }
-                            )
+                    NeonNavigation(current) { destination ->
+                        nav.navigate(destination.route) {
+                            popUpTo(Destination.HOME.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
                         }
                     }
                 }
             }
         ) { padding ->
-            NavHost(nav, startDestination = "welcome", modifier = Modifier.padding(padding)) {
+            NavHost(nav, startDestination = initialRoute, modifier = Modifier.padding(padding),
+                enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
                 composable("welcome") {
                     WelcomeScreen(
                         onGetStarted = { nav.navigate("get_started") },
@@ -134,11 +158,11 @@ fun SmartDryingRackRoot() {
                 composable("device_setup") {
                     DeviceSetupScreen(
                         onFinishSetup = {
-                            nav.navigate(Destination.HOME.route) { popUpTo("device_setup") { inclusive = true } }
+                            nav.navigate(Destination.HOME.route) { popUpTo(nav.graph.id) { inclusive = true }; launchSingleTop = true }
                         }
                     )
                 }
-                composable(Destination.HOME.route) { HomeRoute() }
+                composable(Destination.HOME.route) { HomeRoute(onConnect = { nav.navigate("device_settings") }, onControl = { nav.navigate(Destination.CONTROL.route) { launchSingleTop = true } }) }
                 composable(Destination.CONTROL.route) { ControlRoute() }
                 composable(Destination.ALERTS.route) { AlertsRoute() }
                 composable("notifications") { NotificationsScreen(onBack = { nav.popBackStack() }) }
@@ -157,6 +181,29 @@ fun SmartDryingRackRoot() {
                 composable("notification_settings") { NotificationSettingsScreen(onBack = { nav.popBackStack() }) }
                 composable("appearance_settings") { AppearanceSettingsScreen(onBack = { nav.popBackStack() }) }
                 composable("about") { AboutScreen(onBack = { nav.popBackStack() }) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NeonNavigation(current: String?, onNavigate: (Destination) -> Unit) {
+    val shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
+    val cyan = AppColors.Primary
+    Row(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(AppColors.Card, AppColors.Background)))
+        .border(1.dp, cyan.copy(alpha = .24f), shape).navigationBarsPadding().padding(horizontal = 8.dp, vertical = 6.dp)) {
+        Destination.entries.forEach { destination ->
+            val selected = current == destination.route
+            val tint = if (selected) cyan else AppColors.TextSecondary
+            Column(Modifier.weight(1f).heightIn(min = 56.dp)
+                .selectable(selected, role = Role.Tab, onClick = { onNavigate(destination) })
+                .padding(vertical = 5.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(destination.icon, contentDescription = null, tint = tint, modifier = Modifier.size(25.dp)
+                    .shadow(if (selected && LocalDarkTheme.current) 6.dp else 0.dp, RoundedCornerShape(12.dp),
+                        ambientColor = cyan.copy(alpha = .4f), spotColor = cyan.copy(alpha = .4f)))
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(destination.label), style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    color = tint, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
             }
         }
     }

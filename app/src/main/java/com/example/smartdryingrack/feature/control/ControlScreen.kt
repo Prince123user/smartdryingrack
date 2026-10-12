@@ -1,10 +1,14 @@
 package com.example.smartdryingrack.feature.control
 
 import android.text.format.DateFormat
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Umbrella
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -69,6 +73,7 @@ private fun Unavailable.res(): Int = when (this) {
     Unavailable.ALREADY_EXTENDED -> R.string.unavailable_extended
     Unavailable.ALREADY_RETRACTED -> R.string.unavailable_retracted
     Unavailable.MOVING -> R.string.unavailable_moving
+    Unavailable.UNSAFE -> R.string.reject_error
 }
 
 @StringRes
@@ -85,28 +90,33 @@ private fun RejectReason.res(): Int = when (this) {
 @Composable
 fun ControlScreen(state: ControlUiState, actions: ControlActions) {
     ScreenColumn {
-        Text("Control & Schedule", style = MaterialTheme.typography.headlineMedium, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
-
         ModeSelector(state.mode, actions::setMode, Modifier.fillMaxWidth())
 
-        RackStatusCard(state.rackState, false, "Clear skies")
+        com.example.smartdryingrack.core.designsystem.RackHero(state.rackState)
+        if (state.pendingMovement != null) {
+            Text("Movement accepted. Waiting for position confirmation.", color = AppColors.Primary)
+        } else if (state.connection != com.example.smartdryingrack.domain.model.ConnectionState.ONLINE) {
+            Text("Connect your rack before using movement controls.", color = AppColors.TextSecondary)
+        } else if (state.rackState in setOf(com.example.smartdryingrack.domain.model.RackState.UNKNOWN, com.example.smartdryingrack.domain.model.RackState.ERROR)) {
+            Text("Position is unknown or faulted. Inspect your rack and reconnect before moving it.", color = AppColors.Warning)
+        }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             RackControlButton(
-                label = "▲ Extend",
+                label = "Extend",
                 onClick = { actions.send(RackAction.EXTEND) },
                 enabled = state.availability.extend == null,
                 modifier = Modifier.weight(1f)
             )
             RackControlButton(
-                label = "■ Stop",
+                label = "Stop",
                 onClick = { actions.send(RackAction.STOP) },
                 enabled = state.availability.stop == null,
                 modifier = Modifier.weight(1f),
                 accent = AppColors.Warning
             )
             RackControlButton(
-                label = "▼ Retract",
+                label = "Retract",
                 onClick = { actions.send(RackAction.RETRACT) },
                 enabled = state.availability.retract == null,
                 modifier = Modifier.weight(1f)
@@ -119,31 +129,15 @@ fun ControlScreen(state: ControlUiState, actions: ControlActions) {
             Text(stringResource(it.res()), color = AppColors.Warning, style = MaterialTheme.typography.bodyMedium)
         }
 
+        com.example.smartdryingrack.core.designsystem.NeonFeatureRow("Rain protection enabled",
+            "Confirmed rain requests retraction. Firmware safety remains independent.", androidx.compose.material.icons.Icons.Outlined.Umbrella)
         ScheduleCard(state, actions)
-        DemoCard(state, actions)
+        Text("The emergency stop sends a Wi-Fi request. Use the physical stop if communication fails.",
+            style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
     }
 }
 
-@Composable
-private fun DemoCard(state: ControlUiState, actions: ControlActions) {
-    GlassCard(Modifier.fillMaxWidth(), accent = AppColors.Warning) {
-        Text("Hardware Simulation & Demo", style = MaterialTheme.typography.titleMedium, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-        FuturisticToggle("Simulate Rain Sensor", state.demo.rain) { actions.setDemoRain(it) }
-        FuturisticToggle("Simulate Sensor Fault", state.demo.sensorError) { actions.setDemoSensorError(it) }
-        FuturisticToggle("Simulate Disconnection", state.demo.offline) { actions.setDemoOffline(it) }
-        Spacer(Modifier.height(8.dp))
-        RackControlButton(
-            "Trigger Clothes Dry Event",
-            actions::demoClothesDry,
-            enabled = true,
-            modifier = Modifier.fillMaxWidth(),
-            accent = AppColors.Success
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ScheduleCard(state: ControlUiState, actions: ControlActions) {
     var editing by remember { mutableStateOf<Boolean?>(null) }
@@ -157,7 +151,7 @@ private fun ScheduleCard(state: ControlUiState, actions: ControlActions) {
         TimeRow("Rack Out", formatter.format(schedule.extendTime)) { editing = true }
         TimeRow("Rack In", formatter.format(schedule.retractTime)) { editing = false }
         Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             DayOfWeek.entries.forEach { day ->
                 val full = day.getDisplayName(TextStyle.FULL, Locale.getDefault())
                 FilterChip(
@@ -169,8 +163,11 @@ private fun ScheduleCard(state: ControlUiState, actions: ControlActions) {
             }
         }
         Spacer(Modifier.height(8.dp))
-        FuturisticToggle("Weather Protection", state.settings.useWeather) { actions.setUseWeather(it) }
-        FuturisticToggle("Buzzer Sound", state.settings.buzzer) { actions.setBuzzer(it) }
+        if (!schedule.extendTime.isBefore(schedule.retractTime)) {
+            Text("Rack-out time must be earlier than rack-in time.", color = AppColors.Danger)
+        }
+        Text("Schedules run while the app process is active. Configure firmware schedules for protection when your phone is unavailable.",
+            style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
     }
 
     editing?.let { isExtend ->

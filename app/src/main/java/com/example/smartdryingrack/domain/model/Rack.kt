@@ -17,13 +17,13 @@ data class SensorData(
     val temperature: Float,
     val humidity: Float,
     val rainDetected: Boolean,
-    val clothesDryPercentage: Int,
+    val clothesDryPercentage: Int?,
     val timestamp: Long
 ) {
     val isValid: Boolean
         get() = temperature.isFinite() && temperature in -50f..80f &&
             humidity.isFinite() && humidity in 0f..100f &&
-            clothesDryPercentage in 0..100
+            (clothesDryPercentage == null || clothesDryPercentage in 0..100)
 }
 
 data class WeatherData(
@@ -36,13 +36,16 @@ data class WeatherData(
     val isSimulated: Boolean = false
 )
 
-enum class Unavailable { OFFLINE, AUTO_MODE, ALREADY_EXTENDED, ALREADY_RETRACTED, MOVING }
+enum class Unavailable { OFFLINE, AUTO_MODE, ALREADY_EXTENDED, ALREADY_RETRACTED, MOVING, UNSAFE }
 
 data class ControlAvailability(val extend: Unavailable?, val retract: Unavailable?, val stop: Unavailable?)
 
 fun computeAvailability(state: RackState, mode: RackMode, connection: ConnectionState): ControlAvailability {
     if (connection != ConnectionState.ONLINE) {
         return ControlAvailability(Unavailable.OFFLINE, Unavailable.OFFLINE, Unavailable.OFFLINE)
+    }
+    if (state == RackState.UNKNOWN || state == RackState.ERROR) {
+        return ControlAvailability(Unavailable.UNSAFE, Unavailable.UNSAFE, null)
     }
     val moving = state == RackState.EXTENDING || state == RackState.RETRACTING
     val extend = when {

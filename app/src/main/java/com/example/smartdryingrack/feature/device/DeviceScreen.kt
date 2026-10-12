@@ -1,75 +1,64 @@
 package com.example.smartdryingrack.feature.device
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import android.text.format.DateUtils
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.smartdryingrack.core.designsystem.AppColors
-import com.example.smartdryingrack.core.designsystem.Dimens
-import com.example.smartdryingrack.core.designsystem.GlassCard
-import com.example.smartdryingrack.core.designsystem.ScreenColumn
-import com.example.smartdryingrack.core.designsystem.StatusIndicator
+import com.example.smartdryingrack.core.designsystem.*
 import com.example.smartdryingrack.domain.model.ConnectionState
 
 @Composable
 fun DeviceRoute(viewModel: DeviceViewModel = hiltViewModel()) {
-    val connection by viewModel.connection.collectAsStateWithLifecycle()
-    ScreenColumn {
-        Text("Device Diagnostics & Connection", style = MaterialTheme.typography.titleLarge, color = AppColors.TextPrimary)
-
-        GlassCard(Modifier.fillMaxWidth()) {
-            Text("Smart Drying Rack Pro", style = MaterialTheme.typography.titleMedium, color = AppColors.Primary)
-            Spacer(Modifier.height(8.dp))
-            DeviceRow("Status", statusText(connection))
-            DeviceRow("Connection Protocol", "Wi-Fi (MQTT / BLE)")
-            DeviceRow("Signal Strength", "Excellent (-54 dBm)")
-            DeviceRow("Last Sync", "Just now")
-            DeviceRow("Firmware", "v1.0.0 (Latest)")
-            Spacer(Modifier.height(12.dp))
-            StatusIndicator(connection)
-        }
-
-        GlassCard(Modifier.fillMaxWidth()) {
-            Text("Actions", style = MaterialTheme.typography.titleMedium, color = AppColors.TextPrimary)
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = viewModel::reconnect,
-                modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.ButtonHeight)
-            ) {
-                Text("Reconnect / Test Connection", fontWeight = FontWeight.SemiBold)
-            }
-        }
-    }
+    ScreenColumn { DeviceConnectionPanel(viewModel) }
 }
 
 @Composable
-private fun DeviceRow(label: String, value: String) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .height(36.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, color = AppColors.TextSecondary, style = MaterialTheme.typography.bodyMedium)
-        Text(value, color = AppColors.TextPrimary, style = MaterialTheme.typography.bodyMedium)
+fun DeviceConnectionPanel(viewModel: DeviceViewModel = hiltViewModel()) {
+    val connection by viewModel.connection.collectAsStateWithLifecycle()
+    val savedAddress by viewModel.address.collectAsStateWithLifecycle()
+    val sensors by viewModel.sensorData.collectAsStateWithLifecycle()
+    val firmware by viewModel.firmware.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
+    val validation by viewModel.validation.collectAsStateWithLifecycle()
+    var address by rememberSaveable(savedAddress) { mutableStateOf(savedAddress) }
+    Text("Your rack", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
+    Text("Connect your phone and rack to the same Wi-Fi network.", color = AppColors.TextSecondary)
+    GlassCard(Modifier.fillMaxWidth()) {
+        StatusIndicator(connection)
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(
+            value = address, onValueChange = { address = it }, label = { Text("Rack address") },
+            placeholder = { Text("http://192.168.1.50") }, singleLine = true,
+            isError = validation != null, modifier = Modifier.fillMaxWidth(),
+            supportingText = { Text(validation ?: "Find the IP address in your router or firmware serial output.") }
+        )
+        message?.let { Text(it, color = if (connection == ConnectionState.ERROR) AppColors.Danger else AppColors.TextSecondary) }
+        Spacer(Modifier.height(12.dp))
+        Button(onClick = { viewModel.connect(address) }, enabled = address.isNotBlank() && connection != ConnectionState.CONNECTING,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            if (connection == ConnectionState.CONNECTING) {
+                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(if (connection == ConnectionState.CONNECTING) "Connecting…" else "Save and connect")
+        }
+        if (connection != ConnectionState.OFFLINE) {
+            OutlinedButton(onClick = viewModel::disconnect, modifier = Modifier.fillMaxWidth()) { Text("Disconnect") }
+        }
     }
-}
-
-private fun statusText(state: ConnectionState): String = when (state) {
-    ConnectionState.ONLINE -> "CONNECTED"
-    ConnectionState.OFFLINE -> "OFFLINE"
-    ConnectionState.CONNECTING -> "CONNECTING"
-    ConnectionState.ERROR -> "ERROR"
+    GlassCard(Modifier.fillMaxWidth()) {
+        Text("Device details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text("Protocol: Wi-Fi REST", color = AppColors.TextSecondary)
+        Text("Firmware: ${firmware ?: "Not reported"}", color = AppColors.TextSecondary)
+        Text(sensors?.let { "Last reading: " + DateUtils.getRelativeTimeSpanString(it.timestamp, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS) }
+            ?: "No sensor readings received", color = AppColors.TextSecondary)
+        if (connection != ConnectionState.ONLINE && sensors != null) Text("Readings are stale", color = AppColors.Warning)
+    }
 }

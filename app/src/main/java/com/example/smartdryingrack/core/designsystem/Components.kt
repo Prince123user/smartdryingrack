@@ -46,6 +46,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -86,16 +88,11 @@ fun RackState.labelRes(): Int = when (this) {
 
 @Composable
 fun ScreenColumn(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(AppColors.Background, AppColors.BackgroundAlt)))
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(Dimens.ScreenPadding),
-        verticalArrangement = Arrangement.spacedBy(Dimens.Gap),
-        content = content
-    )
+    Box(modifier.fillMaxSize()) {
+        CircuitBackground()
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Dimens.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimens.Gap), content = content)
+    }
 }
 
 @Composable
@@ -107,9 +104,11 @@ fun GlassCard(
     val shape = MaterialTheme.shapes.large
     Column(
         modifier
+            .shadow(if (LocalDarkTheme.current) 6.dp else 1.dp, shape,
+                ambientColor = accent.copy(alpha = .12f), spotColor = accent.copy(alpha = .12f))
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(AppColors.CardAlt, AppColors.Card)))
-            .border(1.dp, accent.copy(alpha = 0.25f), shape)
+            .background(Brush.linearGradient(listOf(AppColors.CardAlt.copy(alpha = .95f), AppColors.Card.copy(alpha = .94f))))
+            .border(1.dp, accent.copy(alpha = if (LocalDarkTheme.current) .38f else .2f), shape)
             .padding(Dimens.CardPadding),
         content = content
     )
@@ -130,6 +129,7 @@ fun SensorCard(label: String, value: String, modifier: Modifier = Modifier, acce
 
 @Composable
 fun ProgressRingCard(label: String, percentage: Int, subtitle: String, modifier: Modifier = Modifier, accent: Color = AppColors.Primary) {
+    val ringTrack = AppColors.Border
     GlassCard(modifier.semantics(mergeDescendants = true) {}, accent) {
         Row(
             Modifier.fillMaxWidth(),
@@ -147,7 +147,7 @@ fun ProgressRingCard(label: String, percentage: Int, subtitle: String, modifier:
                 Canvas(Modifier.fillMaxSize()) {
                     val stroke = 6.dp.toPx()
                     drawArc(
-                        color = AppColors.Border,
+                        color = ringTrack,
                         startAngle = 0f,
                         sweepAngle = 360f,
                         useCenter = false,
@@ -196,59 +196,23 @@ fun RackStatusCard(
     condition: String?,
     modifier: Modifier = Modifier
 ) {
-    val title: Int
-    val subtitle: String
-    val accent: Color
-    if (rainConfirmed) {
-        title = R.string.rack_rain_title
-        subtitle = stringResource(R.string.rack_rain_sub)
-        accent = AppColors.Warning
-    } else {
-        title = state.labelRes()
-        accent = when (state) {
-            RackState.EXTENDED -> AppColors.Success
-            RackState.ERROR -> AppColors.Danger
-            RackState.UNKNOWN, RackState.STOPPED -> AppColors.Warning
-            else -> AppColors.Primary
-        }
-        subtitle = when (state) {
-            RackState.EXTENDED -> condition ?: stringResource(R.string.rack_out_sub_default)
-            RackState.RETRACTED -> stringResource(R.string.rack_in_sub)
-            RackState.EXTENDING, RackState.RETRACTING -> stringResource(R.string.rack_moving_sub)
-            RackState.STOPPED -> stringResource(R.string.rack_stopped_sub)
-            RackState.ERROR -> stringResource(R.string.rack_error_sub)
-            RackState.UNKNOWN -> stringResource(R.string.rack_unknown_sub)
-        }
-    }
-    val target = when (state) {
-        RackState.EXTENDED, RackState.EXTENDING -> 1f
-        RackState.RETRACTED, RackState.RETRACTING -> 0f
-        else -> 0.5f
-    }
-    val progress by animateFloatAsState(target, tween(3000), label = "rackProgress")
-
-    GlassCard(modifier.semantics(mergeDescendants = true) {}, accent) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(title), style = MaterialTheme.typography.titleLarge, color = accent)
-            StatusBadge(if (rainConfirmed) "RAIN DETECTED" else stringResource(title), accent)
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary)
-        Spacer(Modifier.height(14.dp))
-        Canvas(Modifier.fillMaxWidth().height(56.dp)) {
-            val w = size.width
-            val h = size.height
-            drawRoundRect(
-                color = accent.copy(alpha = 0.35f),
-                size = Size(w * 0.12f, h),
-                cornerRadius = CornerRadius(12f, 12f)
-            )
-            val len = w * 0.88f * progress
-            if (len > 1f) {
-                for (i in 0..3) {
-                    val y = h * (0.15f + 0.23f * i)
-                    drawLine(accent, Offset(w * 0.12f, y), Offset(w * 0.12f + len, y), strokeWidth = 6f, cap = StrokeCap.Round)
-                }
+    val accent = if (rainConfirmed) AppColors.Warning else AppColors.Primary
+    GlassCard(modifier.fillMaxWidth(), accent) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            NeonIcon(if (rainConfirmed) Icons.Outlined.Umbrella else Icons.Outlined.DryCleaning, accent)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(state.labelRes()), style = MaterialTheme.typography.titleMedium,
+                    color = AppColors.TextPrimary, fontWeight = FontWeight.Bold)
+                Text(when {
+                    rainConfirmed -> "Rain confirmed · protection requested"
+                    state == RackState.EXTENDED -> "Ready for drying"
+                    state == RackState.RETRACTED -> "Rack is sheltered"
+                    state == RackState.EXTENDING || state == RackState.RETRACTING -> "Movement reported by the rack"
+                    state == RackState.ERROR -> "Inspect your rack before reconnecting"
+                    state == RackState.STOPPED -> "Movement stopped"
+                    else -> "Waiting for live position telemetry"
+                }, style = MaterialTheme.typography.bodySmall, color = AppColors.TextSecondary)
             }
         }
     }
@@ -280,7 +244,7 @@ fun ModeSelector(mode: RackMode, onModeChange: (RackMode) -> Unit, modifier: Mod
         RackMode.entries.forEach { m ->
             val selected = m == mode
             val bg by animateColorAsState(
-                if (selected) AppColors.Primary.copy(alpha = 0.2f) else Color.Transparent,
+                if (selected) AppColors.Primary.copy(alpha = 0.3f) else Color.Transparent,
                 label = "modeBg"
             )
             Box(
@@ -314,21 +278,11 @@ fun RackControlButton(
     modifier: Modifier = Modifier,
     accent: Color = AppColors.Primary
 ) {
-    val haptic = LocalHapticFeedback.current
-    OutlinedButton(
-        onClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            onClick()
-        },
-        enabled = enabled,
-        modifier = modifier.heightIn(min = Dimens.ButtonHeight),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, if (enabled) accent else AppColors.Border),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = accent,
-            disabledContentColor = AppColors.TextSecondary.copy(alpha = 0.6f)
-        )
-    ) { Text(label, fontWeight = FontWeight.SemiBold) }
+    NeonAction(label, when {
+        label.contains("Extend", true) -> Icons.Outlined.KeyboardDoubleArrowUp
+        label.contains("Retract", true) -> Icons.Outlined.KeyboardDoubleArrowDown
+        else -> Icons.Outlined.StopCircle
+    }, onClick, enabled, modifier, accent)
 }
 
 @Composable
@@ -361,7 +315,7 @@ fun FuturisticToggle(label: String, checked: Boolean, modifier: Modifier = Modif
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, color = AppColors.TextPrimary)
+        Text(label, modifier = Modifier.weight(1f).padding(end = 8.dp), color = AppColors.TextPrimary)
         Switch(checked = checked, onCheckedChange = null)
     }
 }

@@ -7,7 +7,7 @@ import java.time.LocalTime
 data class AutomationSettings(
     val rainSensitivity: Float = 0.4f,
     val dryThresholdPercent: Int = 90,
-    val useWeather: Boolean = true,
+    val useWeather: Boolean = false,
     val buzzer: Boolean = true,
     val clothesDryAlert: Boolean = true,
     val pushNotifications: Boolean = true,
@@ -16,7 +16,7 @@ data class AutomationSettings(
     val scheduleAlerts: Boolean = true,
     val darkTheme: Boolean = true,
     val deviceName: String = "Smart Drying Rack Pro",
-    val firmwareVersion: String = "v1.0.0"
+    val firmwareVersion: String = "Unknown"
 )
 
 data class RackSchedule(

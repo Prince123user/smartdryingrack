@@ -16,11 +16,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import com.example.smartdryingrack.domain.model.RackAction
+import com.example.smartdryingrack.domain.model.CommandSource
+import com.example.smartdryingrack.domain.model.CommandResult
 
 data class HomeUiState(
     val sensorData: SensorData? = null,
     val rackState: RackState = RackState.UNKNOWN,
-    val rackMode: RackMode = RackMode.AUTO,
+    val rackMode: RackMode = RackMode.MANUAL,
     val connection: ConnectionState = ConnectionState.OFFLINE,
     val rainConfirmed: Boolean = false,
     val weather: WeatherData? = null,
@@ -29,10 +35,19 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    rack: RackRepository,
+    private val rack: RackRepository,
     weather: WeatherRepository,
     settings: SettingsRepository
 ) : ViewModel() {
+
+    private val _message = MutableStateFlow<String?>(null)
+    val message = _message.asStateFlow()
+    fun retract() { viewModelScope.launch {
+        _message.value = when (rack.send(RackAction.RETRACT, CommandSource.MANUAL)) {
+            CommandResult.Accepted -> "Retraction accepted. Waiting for telemetry."
+            is CommandResult.Rejected -> "Retraction unavailable. Check connection, mode and rack status in Controls."
+        }
+    } }
 
     private val base = combine(
         rack.sensorData, rack.rackState, rack.mode, rack.connection, rack.rainConfirmed

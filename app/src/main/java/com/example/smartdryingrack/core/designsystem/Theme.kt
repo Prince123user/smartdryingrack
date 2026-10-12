@@ -4,24 +4,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
 private val DarkScheme = darkColorScheme(
-    primary = AppColors.Primary,
-    onPrimary = Color(0xFF00203A),
-    secondary = AppColors.Success,
-    secondaryContainer = AppColors.CardAlt,
-    onSecondaryContainer = AppColors.Success,
-    error = AppColors.Danger,
-    errorContainer = AppColors.CardAlt,
-    onErrorContainer = AppColors.Danger,
-    background = AppColors.Background,
-    onBackground = AppColors.TextPrimary,
-    surface = AppColors.Card,
-    onSurface = AppColors.TextPrimary,
-    surfaceVariant = AppColors.CardAlt,
-    onSurfaceVariant = AppColors.TextSecondary,
-    outline = AppColors.Border
+    primary = DarkAppColors.Primary,
+    onPrimary = Color(0xFF001B25),
+    secondary = DarkAppColors.Success,
+    secondaryContainer = DarkAppColors.CardAlt,
+    onSecondaryContainer = DarkAppColors.Success,
+    error = DarkAppColors.Danger,
+    errorContainer = DarkAppColors.CardAlt,
+    onErrorContainer = DarkAppColors.Danger,
+    background = DarkAppColors.Background,
+    onBackground = DarkAppColors.TextPrimary,
+    surface = DarkAppColors.Card,
+    onSurface = DarkAppColors.TextPrimary,
+    surfaceVariant = DarkAppColors.CardAlt,
+    onSurfaceVariant = DarkAppColors.TextSecondary,
+    outline = DarkAppColors.Border
 )
 
 private val LightScheme = lightColorScheme(
@@ -44,10 +45,12 @@ private val LightScheme = lightColorScheme(
 
 @Composable
 fun SmartDryingRackTheme(darkTheme: Boolean = true, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalDarkTheme provides darkTheme) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkScheme else LightScheme,
         typography = AppTypography,
         shapes = AppShapes,
         content = content
     )
+    }
 }
