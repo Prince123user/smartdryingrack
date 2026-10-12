@@ -1,0 +1,135 @@
+package com.example.smartdryingrack.feature.control
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.smartdryingrack.data.hardware.DeviceSimulator
+import com.example.smartdryingrack.data.repository.RackRepository
+import com.example.smartdryingrack.data.repository.ScheduleRepository
+import com.example.smartdryingrack.data.repository.SettingsRepository
+import com.example.smartdryingrack.domain.model.AutomationSettings
+import com.example.smartdryingrack.domain.model.CommandResult
+import com.example.smartdryingrack.domain.model.CommandSource
+import com.example.smartdryingrack.domain.model.ConnectionState
+import com.example.smartdryingrack.domain.model.ControlAvailability
+import com.example.smartdryingrack.domain.model.LastCommand
+import com.example.smartdryingrack.domain.model.RackAction
+import com.example.smartdryingrack.domain.model.RackMode
+import com.example.smartdryingrack.domain.model.RackSchedule
+import com.example.smartdryingrack.domain.model.RackState
+import com.example.smartdryingrack.domain.model.RejectReason
+import com.example.smartdryingrack.domain.model.computeAvailability
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalTime
+import javax.inject.Inject
+
+data class DemoState(val rain: Boolean = false, val sensorError: Boolean = false, val offline: Boolean = false)
+
+data class ControlUiState(
+    val mode: RackMode = RackMode.AUTO,
+    val rackState: RackState = RackState.UNKNOWN,
+    val connection: ConnectionState = ConnectionState.OFFLINE,
+    val lastCommand: LastCommand? = null,
+    val lastUpdated: Long? = null,
+    val availability: ControlAvailability = ControlAvailability(null, null, null),
+    val schedule: RackSchedule = RackSchedule(),
+    val settings: AutomationSettings = AutomationSettings(),
+    val demo: DemoState = DemoState(),
+    val rejection: RejectReason? = null
+)
+
+interface ControlActions {
+    fun setMode(mode: RackMode)
+    fun send(action: RackAction)
+    fun emergencyStop()
+    fun setScheduleEnabled(enabled: Boolean)
+    fun setExtendTime(time: LocalTime)
+    fun setRetractTime(time: LocalTime)
+    fun setDay(day: DayOfWeek, enabled: Boolean)
+    fun setUseWeather(enabled: Boolean)
+    fun setBuzzer(enabled: Boolean)
+    fun setDemoRain(on: Boolean)
+    fun setDemoSensorError(on: Boolean)
+    fun setDemoOffline(offline: Boolean)
+    fun demoClothesDry()
+}
+
+@HiltViewModel
+class ControlViewModel @Inject constructor(
+    private val rack: RackRepository,
+    private val schedules: ScheduleRepository,
+    private val settings: SettingsRepository,
+    private val simulator: DeviceSimulator
+) : ViewModel(), ControlActions {
+
+    private val demo = MutableStateFlow(DemoState())
+    private val rejection = MutableStateFlow<RejectReason?>(null)
+
+    private val base = combine(
+        rack.mode, rack.rackState, rack.connection, rack.lastCommand, rack.sensorData
+    ) { mode, state, conn, last, sensor ->
+        ControlUiState(
+            mode = mode,
+            rackState = state,
+            connection = conn,
+            lastCommand = last,
+            lastUpdated = sensor?.timestamp,
+            availability = computeAvailability(state, mode, conn)
+        )
+    }
+
+    val uiState: StateFlow<ControlUiState> =
+        combine(base, schedules.schedule, settings.settings, demo, rejection) { b, sch, set, d, rej ->
+            b.copy(schedule = sch, settings = set, demo = d, rejection = rej)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ControlUiState())
+
+    override fun setMode(mode: RackMode) {
+        rejection.value = null
+        rack.setMode(mode)
+    }
+
+    override fun send(action: RackAction) = dispatch(action, CommandSource.MANUAL)
+
+    override fun emergencyStop() = dispatch(RackAction.STOP, CommandSource.EMERGENCY)
+
+    private fun dispatch(action: RackAction, source: CommandSource) {
+        viewModelScope.launch {
+            rejection.value = (rack.send(action, source) as? CommandResult.Rejected)?.reason
+        }
+    }
+
+    override fun setScheduleEnabled(enabled: Boolean) = schedules.update { it.copy(enabled = enabled) }
+    override fun setExtendTime(time: LocalTime) = schedules.update { it.copy(extendTime = time) }
+    override fun setRetractTime(time: LocalTime) = schedules.update { it.copy(retractTime = time) }
+    override fun setDay(day: DayOfWeek, enabled: Boolean) = schedules.update { it.withDay(day, enabled) }
+    override fun setUseWeather(enabled: Boolean) = settings.update { it.copy(useWeather = enabled) }
+    override fun setBuzzer(enabled: Boolean) = settings.update { it.copy(buzzer = enabled) }
+
+    override fun setDemoRain(on: Boolean) {
+        demo.update { it.copy(rain = on) }
+        simulator.setRain(on)
+    }
+
+    override fun setDemoSensorError(on: Boolean) {
+        demo.update { it.copy(sensorError = on) }
+        simulator.setSensorError(on)
+    }
+
+    override fun setDemoOffline(offline: Boolean) {
+        demo.update { it.copy(offline = offline) }
+        viewModelScope.launch { simulator.setOffline(offline) }
+    }
+
+    override fun demoClothesDry() = simulator.setClothesDry(DEMO_DRY_PERCENT)
+
+    private companion object {
+        const val DEMO_DRY_PERCENT = 95
+    }
+}

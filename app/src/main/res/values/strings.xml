@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Smart Drying Rack</string>
+    <string name="app_tagline">Smart. Dry. Protected.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_control">Control</string>
+    <string name="nav_alerts">Alerts</string>
+    <string name="nav_history">History</string>
+
+    <string name="conn_online">Online</string>
+    <string name="conn_offline">Offline</string>
+    <string name="conn_connecting">Connecting…</string>
+    <string name="conn_error">Error</string>
+
+    <string name="rack_out_title">RACK OUT</string>
+    <string name="rack_in_title">RACK IN</string>
+    <string name="rack_extending">EXTENDING…</string>
+    <string name="rack_retracting">RETRACTING…</string>
+    <string name="rack_stopped">STOPPED</string>
+    <string name="rack_error">RACK ERROR</string>
+    <string name="rack_unknown">STATUS UNKNOWN</string>
+    <string name="rack_rain_title">RAIN DETECTED</string>
+    <string name="rack_rain_sub">Protecting your clothes</string>
+    <string name="rack_out_sub_default">Drying in progress</string>
+    <string name="rack_in_sub">Your clothes are protected</string>
+    <string name="rack_moving_sub">The rack is moving</string>
+    <string name="rack_stopped_sub">The rack stopped mid-travel</string>
+    <string name="rack_error_sub">Check the rack before sending another command</string>
+    <string name="rack_unknown_sub">Waiting for the rack to report</string>
+
+    <string name="label_temperature">Temperature</string>
+    <string name="label_humidity">Humidity</string>
+    <string name="label_rain_sensor">Rain sensor</string>
+    <string name="label_clothes_dry">Clothes dry</string>
+    <string name="value_celsius">%1$d°C</string>
+    <string name="value_percent">%1$d%%</string>
+    <string name="value_unknown">--</string>
+    <string name="rain_dry">DRY</string>
+    <string name="rain_detected">RAIN DETECTED</string>
+    <string name="rain_wet">WET</string>
+    <string name="rain_unknown">UNKNOWN</string>
+    <string name="stale_offline">Offline. Last updated %1$s.</string>
+    <string name="stale_never">Offline. No sensor data yet.</string>
+
+    <string name="weather_title">Weather forecast</string>
+    <string name="weather_unavailable">Forecast unavailable</string>
+    <string name="forecast_line">Rain chance %1$d%% around %2$s</string>
+    <string name="forecast_detail">%1$s · wind %2$d km/h</string>
+    <string name="demo_data">Demo data</string>
+
+    <string name="drying_progress_title">Drying progress</string>
+    <string name="drying_remaining">About %1$s left (estimate)</string>
+    <string name="clothes_ready">Clothes are dry. Ready to take in.</string>
+    <string name="duration_hm">%1$dh %2$dm</string>
+    <string name="duration_m">%1$dm</string>
+
+    <string name="control_title">Control and schedule</string>
+    <string name="mode_auto">Auto</string>
+    <string name="mode_manual">Manual</string>
+    <string name="action_extend">Extend rack</string>
+    <string name="action_retract">Retract rack</string>
+    <string name="action_emergency_stop">Emergency stop</string>
+    <string name="unavailable_offline">The rack is offline</string>
+    <string name="unavailable_auto">Switch to Manual to move the rack</string>
+    <string name="unavailable_extended">The rack is already out</string>
+    <string name="unavailable_retracted">The rack is already in</string>
+    <string name="unavailable_moving">The rack is moving. Use Emergency stop first.</string>
+    <string name="reject_offline">Unable to connect to the drying rack. Check that it is powered on and on your network.</string>
+    <string name="reject_already">The rack is already in that position.</string>
+    <string name="reject_busy">The rack is busy. Try again in a moment.</string>
+    <string name="reject_error">The rack couldn\'t run that command.</string>
+    <string name="reject_hold">Emergency stop is active. Send a manual command to release it.</string>
+    <string name="reject_none">That command isn\'t supported.</string>
+
+    <string name="info_title">Rack details</string>
+    <string name="info_mode">Mode</string>
+    <string name="info_rack">Rack</string>
+    <string name="info_connection">Connection</string>
+    <string name="info_last_command">Last command</string>
+    <string name="info_last_updated">Last updated</string>
+    <string name="info_none">None yet</string>
+    <string name="last_command_fmt">%1$s (%2$s) · %3$s</string>
+    <string name="source_manual">manual</string>
+    <string name="source_emergency">emergency</string>
+    <string name="source_rain">rain</string>
+    <string name="source_weather">forecast</string>
+    <string name="source_schedule">schedule</string>
+    <string name="source_auto">auto</string>
+    <string name="source_safety">safety</string>
+    <string name="cmd_extend">Extend</string>
+    <string name="cmd_retract">Retract</string>
+    <string name="cmd_stop">Stop</string>
+
+    <string name="schedule_title">Schedule</string>
+    <string name="schedule_enabled">Schedule enabled</string>
+    <string name="schedule_rack_out">Rack out</string>
+    <string name="schedule_rack_in">Rack in</string>
+    <string name="use_forecast">Use weather forecast</string>
+    <string name="buzzer">Buzzer</string>
+
+    <string name="demo_title">Demo tools</string>
+    <string name="demo_rain">Simulate rain</string>
+    <string name="demo_sensor_error">Simulate sensor error</string>
+    <string name="demo_disconnect">Simulate disconnect</string>
+    <string name="demo_dry">Simulate clothes dry</string>
+
+    <string name="alerts_title">Alerts</string>
+    <string name="filter_all">All</string>
+    <string name="filter_rain">Rain</string>
+    <string name="filter_dry">Dry</string>
+    <string name="filter_system">System</string>
+    <string name="filter_schedule">Schedule</string>
+    <string name="mark_all_read">Mark all read</string>
+    <string name="clear_all">Clear all</string>
+    <string name="alerts_empty_title">No alerts yet</string>
+    <string name="alerts_empty_body">Rain, drying, and device events will show up here.</string>
+    <string name="unread">Unread</string>
+
+    <string name="ev_rain_detected_t">Rain detected</string>
+    <string name="ev_rain_detected_d">The rain sensor confirmed rain.</string>
+    <string name="ev_rain_retract_t">Rack retracted (rain)</string>
+    <string name="ev_rain_retract_d">Your drying rack was automatically retracted.</string>
+    <string name="ev_forecast_skip_t">Rack extension skipped</string>
+    <string name="ev_forecast_skip_d">Rain probability is too high.</string>
+    <string name="ev_forecast_retract_t">Rack retracted (forecast)</string>
+    <string name="ev_forecast_retract_d">Rain is likely soon.</string>
+    <string name="ev_clothes_dry_t">Clothes are dry</string>
+    <string name="ev_clothes_dry_d">Ready to take in.</string>
+    <string name="ev_schedule_extend_t">Rack extended (schedule)</string>
+    <string name="ev_schedule_extend_d">The scheduled extension ran.</string>
+    <string name="ev_schedule_retract_t">Rack retracted (schedule)</string>
+    <string name="ev_schedule_retract_d">The scheduled retraction ran.</string>
+    <string name="ev_manual_extend_t">Rack extended (manual)</string>
+    <string name="ev_manual_extend_d">You extended the rack.</string>
+    <string name="ev_manual_retract_t">Rack retracted (manual)</string>
+    <string name="ev_manual_retract_d">You retracted the rack.</string>
+    <string name="ev_emergency_stop_t">Emergency stop</string>
+    <string name="ev_emergency_stop_d">Automation is paused until you send a manual command.</string>
+    <string name="ev_device_connected_t">Device connected</string>
+    <string name="ev_device_connected_d">The drying rack is online.</string>
+    <string name="ev_device_disconnected_t">Device disconnected</string>
+    <string name="ev_device_disconnected_d">Unable to reach the drying rack.</string>
+    <string name="ev_device_error_t">Rack didn\'t finish moving</string>
+    <string name="ev_device_error_d">The move timed out and the rack was stopped.</string>
+    <string name="ev_sensor_invalid_t">Invalid sensor reading</string>
+    <string name="ev_sensor_invalid_d">Bad readings are being ignored.</string>
+
+    <string name="history_title">History</string>
+    <string name="stat_rain_saves">Rain saves</string>
+    <string name="stat_dry_alerts">Clothes-dry alerts</string>
+    <string name="stat_manual">Manual operations</string>
+    <string name="stat_auto">Automatic operations</string>
+    <string name="recent_events">Recent events</string>
+</resources>
