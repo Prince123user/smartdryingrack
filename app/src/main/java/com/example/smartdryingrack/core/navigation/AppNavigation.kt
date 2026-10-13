@@ -14,6 +14,8 @@ import androidx.compose.material3.BadgedBox
 import com.example.smartdryingrack.feature.alerts.NotificationsViewModel
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -174,7 +176,14 @@ fun SmartDryingRackRoot(viewModel: SettingsViewModel = hiltViewModel()) {
                 composable(Destination.HOME.route) { HomeRoute(onConnect = { nav.navigate("device_settings") }, onControl = { nav.navigate(Destination.CONTROL.route) { launchSingleTop = true } }) }
                 composable(Destination.CONTROL.route) { ControlRoute() }
                 composable(Destination.ALERTS.route) { AlertsRoute() }
-                composable("notifications") { NotificationsScreen(onBack = { nav.popBackStack() }) }
+                composable("notifications") {
+                    NotificationsScreen(onBack = {
+                        nav.navigate(Destination.HOME.route) {
+                            popUpTo(Destination.HOME.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    })
+                }
                 composable(Destination.HISTORY.route) { HistoryRoute() }
                 composable("settings") {
                     SettingsRoute(
@@ -204,10 +213,14 @@ private fun NeonNavigation(current: String?, onNavigate: (Destination) -> Unit) 
         Destination.entries.forEach { destination ->
             val selected = current == destination.route
             val tint = if (selected) cyan else AppColors.TextSecondary
+            val destinationLabel = stringResource(destination.label)
             Column(Modifier.weight(1f).heightIn(min = 56.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(if (selected) cyan.copy(alpha = .14f) else androidx.compose.ui.graphics.Color.Transparent)
                 .selectable(selected, role = Role.Tab, onClick = { onNavigate(destination) })
+                .semantics(mergeDescendants = true) {
+                    contentDescription = destinationLabel
+                }
                 .padding(vertical = 5.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(destination.icon, contentDescription = null, tint = tint, modifier = Modifier.size(25.dp)
                     .shadow(if (selected && LocalDarkTheme.current) 6.dp else 0.dp, RoundedCornerShape(12.dp),
