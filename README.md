@@ -25,6 +25,8 @@ cloud_gradle :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 
 Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. Minimum Android version: 8.0 (API 26).
 
+The matching ESP32 WROOM-32 Arduino sketch, wiring table, API examples, calibration procedure, and upload steps are in [ESP32_FIRMWARE.md](docs/ESP32_FIRMWARE.md) and `firmware/SmartDryingRack/SmartDryingRack.ino`.
+
 ## Connect your rack
 
 Put the phone and rack on the same Wi-Fi network. Open Connection, enter the rack's base address, and tap **Save and connect**. The implemented firmware contract is documented in [DEVICE_API.md](docs/DEVICE_API.md): `GET /api/status`, `POST /api/commands` with request IDs, and explicit command acknowledgements. An existing firmware API specification was not supplied, so route/field adaptation may be needed.
